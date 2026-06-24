@@ -5,6 +5,11 @@ export default defineConfig({
   plugins: [
     cloudflareTest({
       wrangler: { configPath: './wrangler.jsonc' },
+      // The /api/test-* diagnostic routes are gated behind this flag in the
+      // worker. It is intentionally absent from the production wrangler config,
+      // so we bind it here to keep the binding-verification tests exercising
+      // those routes. Mirrors the local-dev .dev.vars value.
+      miniflare: { bindings: { ENABLE_TEST_ENDPOINTS: 'true' } },
     }),
   ],
   ssr: {

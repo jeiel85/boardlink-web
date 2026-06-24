@@ -27,6 +27,12 @@ export interface Env {
     fetch: (request: Request) => Promise<Response>;
   };
   JWT_SECRET?: string;
+  // When set to the string 'true', exposes the /api/test-* diagnostic routes
+  // that instantiate Durable Objects / run a D1 query. Bound ONLY in local dev
+  // (.dev.vars) and the workers test pool — never in the production wrangler
+  // config — so these routes are unreachable on the public deployment and
+  // cannot be used to burn the Cloudflare free-tier budget.
+  ENABLE_TEST_ENDPOINTS?: string;
 }
 
 export default {
@@ -128,79 +134,87 @@ async function handleApiRequest(request: Request, url: URL, env: Env): Promise<R
     }
   }
 
-  // Durable Object room test route
-  if (url.pathname === '/api/test-do/rooms') {
-    try {
-      const id = env.ROOMS.idFromName('test-room');
-      const stub = env.ROOMS.get(id);
-      // Forward the request to DO /health
-      return await stub.fetch(new Request(new URL('/health', request.url)));
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      const err = new BoardLinkError('DO_ROOM_FAILED', msg || 'RoomDO fetch failed');
-      return new Response(JSON.stringify({ error: err.toJSON() }), {
-        status: 500,
-        headers: jsonHeaders,
-      });
-    }
-  }
-
-  // Durable Object user session test route
-  if (url.pathname === '/api/test-do/sessions') {
-    try {
-      const id = env.USER_SESSIONS.idFromName('test-session');
-      const stub = env.USER_SESSIONS.get(id);
-      return await stub.fetch(new Request(new URL('/health', request.url)));
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      const err = new BoardLinkError('DO_SESSION_FAILED', msg || 'UserSessionDO fetch failed');
-      return new Response(JSON.stringify({ error: err.toJSON() }), {
-        status: 500,
-        headers: jsonHeaders,
-      });
-    }
-  }
-
-  // Durable Object presence test route
-  if (url.pathname === '/api/test-do/presence') {
-    try {
-      const id = env.NETWORK_PRESENCE.idFromName('test-presence');
-      const stub = env.NETWORK_PRESENCE.get(id);
-      return await stub.fetch(new Request(new URL('/health', request.url)));
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      const err = new BoardLinkError('DO_PRESENCE_FAILED', msg || 'NetworkPresenceDO fetch failed');
-      return new Response(JSON.stringify({ error: err.toJSON() }), {
-        status: 500,
-        headers: jsonHeaders,
-      });
-    }
-  }
-
-  // D1 database test route
-  if (url.pathname === '/api/test-d1') {
-    try {
-      if (!env.DIRECTORY_DB) {
-        throw new Error('DIRECTORY_DB binding not found');
-      }
-      // D1 query test
-      const result = await env.DIRECTORY_DB.prepare('SELECT 1 as connected').first<{
-        connected: number;
-      }>();
-      if (result && result.connected === 1) {
-        return new Response(JSON.stringify({ status: 'ok', db: 'connected' }), {
-          status: 200,
+  // Diagnostic binding-verification routes (instantiate Durable Objects /
+  // run a D1 query). Gated behind ENABLE_TEST_ENDPOINTS so they are only
+  // reachable in local dev and the workers test pool. In production the flag
+  // is unset, so these fall through to the 404 below — preventing anyone from
+  // spinning up Durable Objects / D1 queries on the public deployment and
+  // exhausting the Cloudflare free-tier budget.
+  if (env.ENABLE_TEST_ENDPOINTS === 'true') {
+    // Durable Object room test route
+    if (url.pathname === '/api/test-do/rooms') {
+      try {
+        const id = env.ROOMS.idFromName('test-room');
+        const stub = env.ROOMS.get(id);
+        // Forward the request to DO /health
+        return await stub.fetch(new Request(new URL('/health', request.url)));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        const err = new BoardLinkError('DO_ROOM_FAILED', msg || 'RoomDO fetch failed');
+        return new Response(JSON.stringify({ error: err.toJSON() }), {
+          status: 500,
           headers: jsonHeaders,
         });
       }
-      throw new Error('D1 returned invalid response');
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      const err = new BoardLinkError('D1_FAILED', msg || 'D1 query failed');
-      return new Response(JSON.stringify({ error: err.toJSON() }), {
-        status: 500,
-        headers: jsonHeaders,
-      });
+    }
+
+    // Durable Object user session test route
+    if (url.pathname === '/api/test-do/sessions') {
+      try {
+        const id = env.USER_SESSIONS.idFromName('test-session');
+        const stub = env.USER_SESSIONS.get(id);
+        return await stub.fetch(new Request(new URL('/health', request.url)));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        const err = new BoardLinkError('DO_SESSION_FAILED', msg || 'UserSessionDO fetch failed');
+        return new Response(JSON.stringify({ error: err.toJSON() }), {
+          status: 500,
+          headers: jsonHeaders,
+        });
+      }
+    }
+
+    // Durable Object presence test route
+    if (url.pathname === '/api/test-do/presence') {
+      try {
+        const id = env.NETWORK_PRESENCE.idFromName('test-presence');
+        const stub = env.NETWORK_PRESENCE.get(id);
+        return await stub.fetch(new Request(new URL('/health', request.url)));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        const err = new BoardLinkError('DO_PRESENCE_FAILED', msg || 'NetworkPresenceDO fetch failed');
+        return new Response(JSON.stringify({ error: err.toJSON() }), {
+          status: 500,
+          headers: jsonHeaders,
+        });
+      }
+    }
+
+    // D1 database test route
+    if (url.pathname === '/api/test-d1') {
+      try {
+        if (!env.DIRECTORY_DB) {
+          throw new Error('DIRECTORY_DB binding not found');
+        }
+        // D1 query test
+        const result = await env.DIRECTORY_DB.prepare('SELECT 1 as connected').first<{
+          connected: number;
+        }>();
+        if (result && result.connected === 1) {
+          return new Response(JSON.stringify({ status: 'ok', db: 'connected' }), {
+            status: 200,
+            headers: jsonHeaders,
+          });
+        }
+        throw new Error('D1 returned invalid response');
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        const err = new BoardLinkError('D1_FAILED', msg || 'D1 query failed');
+        return new Response(JSON.stringify({ error: err.toJSON() }), {
+          status: 500,
+          headers: jsonHeaders,
+        });
+      }
     }
   }
 

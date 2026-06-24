@@ -7,6 +7,11 @@
   "assets": {
     "not_found_handling": "single-page-application",
   },
+  // NOTE: do NOT add ENABLE_TEST_ENDPOINTS to "vars" here. The /api/test-*
+  // diagnostic routes (Durable Object / D1 binding checks) are gated behind
+  // that flag and must stay disabled in production. It is bound only for local
+  // dev (.dev.vars) and the workers test pool (vitest.config.workers.mts).
+
   "durable_objects": {
     "bindings": [
       { "name": "ROOMS", "class_name": "RoomDO" },
