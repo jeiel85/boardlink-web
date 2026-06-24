@@ -10,7 +10,8 @@
     "test": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
-    "@boardlink/domain": "workspace:*"
+    "@boardlink/domain": "workspace:*",
+    "zod": "^3.23.0"
   },
   "devDependencies": {
     "typescript": "^5.7.2",
