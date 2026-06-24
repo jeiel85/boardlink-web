@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BoardLink — Open a link. Start playing.</title>
+    <meta
+      name="description"
+      content="A free, accountless, browser-first PWA for real-time multiplayer board & casual games. Open a link on any device and play instantly — no sign-up, no app store, no tracking."
+    />
+    <link rel="canonical" href="https://jeiel85.github.io/boardlink-web/" />
+    <meta name="theme-color" content="#6366f1" />
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png" />
+    <link rel="apple-touch-icon" href="assets/icon-192.png" />
+
+    <!-- Open Graph / social preview -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="BoardLink — Open a link. Start playing." />
+    <meta
+      property="og:description"
+      content="Free, accountless, browser-first multiplayer board & casual games. Open a link and play instantly."
+    />
+    <meta property="og:url" content="https://jeiel85.github.io/boardlink-web/" />
+    <meta property="og:image" content="https://jeiel85.github.io/boardlink-web/assets/desktop.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="BoardLink — Open a link. Start playing." />
+    <meta
+      name="twitter:description"
+      content="Free, accountless, browser-first multiplayer board & casual games."
+    />
+    <meta name="twitter:image" content="https://jeiel85.github.io/boardlink-web/assets/desktop.png" />
+
+    <style>
+      :root {
+        --bg: #0d0f17;
+        --bg-soft: #141826;
+        --card: #161b2c;
+        --border: #232a40;
+        --text: #e7eaf3;
+        --muted: #9aa3bd;
+        --brand: #6366f1;
+        --brand-2: #a855f7;
+        --accent: #818cf8;
+        --radius: 16px;
+        --maxw: 1080px;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+          "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+      .btn {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 12px 22px; border-radius: 999px; font-weight: 600; font-size: 15px;
+        border: 1px solid transparent; cursor: pointer; transition: transform .15s ease, background .15s ease;
+      }
+      .btn:hover { text-decoration: none; transform: translateY(-1px); }
+      .btn-primary { background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #fff; }
+      .btn-ghost { background: transparent; border-color: var(--border); color: var(--text); }
+
+      /* Header */
+      header.nav { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(10px);
+        background: rgba(13,15,23,.72); border-bottom: 1px solid var(--border); }
+      .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+      .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+      .brand img { width: 30px; height: 30px; border-radius: 8px; }
+      .nav-links { display: flex; align-items: center; gap: 22px; }
+      .nav-links a.muted { color: var(--muted); font-size: 14px; font-weight: 500; }
+      @media (max-width: 720px) { .nav-links a.muted { display: none; } }
+
+      /* Hero */
+      .hero { position: relative; overflow: hidden; padding: 84px 0 64px; }
+      .hero::before {
+        content: ""; position: absolute; inset: 0;
+        background: radial-gradient(900px 480px at 70% -10%, rgba(99,102,241,.28), transparent 60%),
+          radial-gradient(700px 420px at 10% 10%, rgba(168,85,247,.18), transparent 60%);
+        pointer-events: none;
+      }
+      .hero-grid { position: relative; display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; }
+      @media (max-width: 880px) { .hero-grid { grid-template-columns: 1fr; gap: 36px; } }
+      .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px;
+        background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.35); color: var(--accent);
+        font-size: 13px; font-weight: 600; }
+      h1 { font-size: clamp(34px, 5vw, 56px); line-height: 1.08; margin: 18px 0 16px; letter-spacing: -.02em; }
+      h1 .grad { background: linear-gradient(120deg, #a5b4fc, #c084fc); -webkit-background-clip: text;
+        background-clip: text; color: transparent; }
+      .lede { color: var(--muted); font-size: clamp(16px, 2.4vw, 19px); max-width: 540px; }
+      .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+      .badges { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 28px; color: var(--muted); font-size: 13.5px; }
+      .badges span { display: inline-flex; align-items: center; gap: 7px; }
+      .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--brand); }
+
+      .device {
+        border: 1px solid var(--border); border-radius: 20px; overflow: hidden;
+        background: var(--bg-soft); box-shadow: 0 30px 80px -30px rgba(0,0,0,.8);
+      }
+      .device .bar { display: flex; gap: 7px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+      .device .bar i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+      .device .bar i:nth-child(1){background:#ef4444;} .device .bar i:nth-child(2){background:#f59e0b;}
+      .device .bar i:nth-child(3){background:#22c55e;}
+      .device img { display: block; width: 100%; height: auto; }
+
+      /* Sections */
+      section { padding: 64px 0; }
+      .eyebrow { color: var(--accent); font-weight: 700; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; }
+      h2 { font-size: clamp(26px, 3.4vw, 34px); margin: 10px 0 6px; letter-spacing: -.01em; }
+      .section-sub { color: var(--muted); max-width: 640px; margin: 0 0 36px; }
+      .grid { display: grid; gap: 18px; }
+      .cols-3 { grid-template-columns: repeat(3, 1fr); }
+      .cols-2 { grid-template-columns: repeat(2, 1fr); }
+      @media (max-width: 820px) { .cols-3, .cols-2 { grid-template-columns: 1fr; } }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
+      .card h3 { margin: 6px 0 8px; font-size: 18px; }
+      .card p { margin: 0; color: var(--muted); font-size: 14.5px; }
+      .ic { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center;
+        background: rgba(99,102,241,.14); border: 1px solid rgba(99,102,241,.3); font-size: 19px; }
+
+      .games { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; }
+      @media (max-width: 820px){ .games { grid-template-columns: 1fr; } }
+      .game { background: linear-gradient(160deg, var(--card), #11152099); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 22px; }
+      .game .tag { font-size: 12px; font-weight: 700; color: var(--accent); }
+      .game h3 { margin: 8px 0 6px; font-size: 19px; }
+      .game p { margin: 0; color: var(--muted); font-size: 14px; }
+      .soon { opacity: .72; }
+      .soon .tag { color: var(--muted); }
+
+      .privacy-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+      .privacy-list li { display: flex; gap: 12px; align-items: flex-start; color: var(--muted); font-size: 15px; }
+      .check { color: #34d399; font-weight: 800; }
+
+      .stack { display: flex; flex-wrap: wrap; gap: 10px; }
+      .chip { padding: 7px 14px; border: 1px solid var(--border); border-radius: 999px; font-size: 13.5px;
+        color: var(--text); background: var(--bg-soft); }
+
+      footer { border-top: 1px solid var(--border); padding: 40px 0 56px; color: var(--muted); font-size: 14px; }
+      .foot-grid { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; align-items: center; }
+      .note { font-size: 12.5px; color: #6b7390; margin-top: 14px; }
+    </style>
+  </head>
+  <body>
+    <header class="nav">
+      <div class="wrap nav-inner">
+        <div class="brand"><img src="assets/icon-192.png" alt="BoardLink logo" /> BoardLink</div>
+        <nav class="nav-links">
+          <a class="muted" href="#join">How to join</a>
+          <a class="muted" href="#games">Games</a>
+          <a class="muted" href="#privacy">Privacy</a>
+          <a class="btn btn-ghost" href="https://github.com/jeiel85/boardlink-web">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <span class="pill">● No account · No app store · No tracking</span>
+          <h1>Open a link.<br /><span class="grad">Start playing.</span></h1>
+          <p class="lede">
+            BoardLink lets people open a link on a phone, tablet, or computer and immediately play
+            short multiplayer games together — with server-authoritative rooms and nothing to install.
+          </p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="https://github.com/jeiel85/boardlink-web">View the project →</a>
+            <a class="btn btn-ghost" href="https://github.com/jeiel85/boardlink-web/tree/main/docs">Read the docs</a>
+          </div>
+          <div class="badges">
+            <span><i class="dot"></i> Browser-first PWA</span>
+            <span><i class="dot"></i> Real-time WebSocket rooms</span>
+            <span><i class="dot"></i> Free &amp; accountless</span>
+          </div>
+        </div>
+        <div class="device">
+          <div class="bar"><i></i><i></i><i></i></div>
+          <img src="assets/desktop.png" alt="BoardLink in-game screenshot" width="1280" height="720" />
+        </div>
+      </div>
+    </div>
+
+    <!-- JOIN -->
+    <section id="join">
+      <div class="wrap">
+        <p class="eyebrow">Five ways in</p>
+        <h2>Get into a game in seconds</h2>
+        <p class="section-sub">No friend requests, no logins. Pick whichever path fits the moment.</p>
+        <div class="grid cols-3">
+          <div class="card"><div class="ic">📡</div><h3>Play nearby</h3><p>Discover people who appear to share your Internet connection and challenge them instantly.</p></div>
+          <div class="card"><div class="ic">🔗</div><h3>Online friends</h3><p>Find an anonymous device profile by its friend code — no email or phone number needed.</p></div>
+          <div class="card"><div class="ic">📷</div><h3>Quick join</h3><p>Enter a room code, scan a QR code, or just open an invitation link someone sent you.</p></div>
+          <div class="card"><div class="ic">📱</div><h3>Same-device play</h3><p>Pass-and-play locally on one screen, with no network connection required at all.</p></div>
+          <div class="card"><div class="ic">⬇️</div><h3>Install as a PWA</h3><p>Add BoardLink to your home screen for an app-like launch — entirely optional.</p></div>
+          <div class="card"><div class="ic">⚡</div><h3>Just a link</h3><p>Everything starts from a URL. Share it anywhere and the other person is one tap from playing.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GAMES -->
+    <section id="games" style="background: var(--bg-soft);">
+      <div class="wrap">
+        <p class="eyebrow">The game set</p>
+        <h2>Short games, made for sharing</h2>
+        <p class="section-sub">A focused launch lineup, with more on the roadmap.</p>
+        <div class="games">
+          <div class="game"><span class="tag">ORIGINAL</span><h3>Bubble Siege</h3><p>An original asymmetric, real-time touch game built for fast head-to-head sessions.</p></div>
+          <div class="game"><span class="tag">CLASSIC</span><h3>Bingo</h3><p>The party favorite — quick to learn, easy to play with a group on any device.</p></div>
+          <div class="game"><span class="tag">CLASSIC</span><h3>Gomoku</h3><p>Five-in-a-row strategy on a clean board. Simple rules, deep play.</p></div>
+        </div>
+        <div class="games" style="margin-top:18px;">
+          <div class="game soon"><span class="tag">COMING SOON</span><h3>Chess</h3><p>Full chess with server-authoritative rules and reconnection support.</p></div>
+          <div class="game soon"><span class="tag">COMING SOON</span><h3>Janggi</h3><p>Korean chess, joining the classics lineup after the core launch.</p></div>
+          <div class="game soon"><span class="tag">COMING SOON</span><h3>Team &amp; party modes</h3><p>Bigger rooms and group formats once the shared runtime is proven.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRIVACY -->
+    <section id="privacy">
+      <div class="wrap grid cols-2" style="align-items:center;">
+        <div>
+          <p class="eyebrow">Private by default</p>
+          <h2>No account. No ads. No tracking.</h2>
+          <p class="section-sub">
+            BoardLink is built so you can play without handing over your identity. The initial
+            release ships without any of the things that usually come bundled with "free."
+          </p>
+        </div>
+        <ul class="privacy-list">
+          <li><span class="check">✓</span> No account, email address, or phone number required.</li>
+          <li><span class="check">✓</span> No advertising SDK, analytics SDK, or third-party tracking scripts.</li>
+          <li><span class="check">✓</span> No social login and no public free-text chat.</li>
+          <li><span class="check">✓</span> Raw visitor IP addresses are never persisted by the app.</li>
+          <li><span class="check">✓</span> Server-authoritative state — no client is trusted for rules or scores.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- TECH -->
+    <section style="background: var(--bg-soft); padding-top:48px; padding-bottom:48px;">
+      <div class="wrap">
+        <p class="eyebrow">Under the hood</p>
+        <h2 style="margin-bottom:20px;">Built on a modern edge stack</h2>
+        <div class="stack">
+          <span class="chip">React 19</span>
+          <span class="chip">TypeScript</span>
+          <span class="chip">Vite</span>
+          <span class="chip">Cloudflare Workers</span>
+          <span class="chip">Durable Objects · WebSocket Hibernation</span>
+          <span class="chip">D1</span>
+          <span class="chip">IndexedDB</span>
+          <span class="chip">Zod schemas</span>
+          <span class="chip">Vitest</span>
+          <span class="chip">Playwright</span>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap foot-grid">
+        <div class="brand"><img src="assets/icon-192.png" alt="BoardLink logo" style="width:24px;height:24px;border-radius:6px;" /> BoardLink</div>
+        <div>
+          <a href="https://github.com/jeiel85/boardlink-web">GitHub</a> ·
+          <a href="https://github.com/jeiel85/boardlink-web/tree/main/docs">Docs</a> ·
+          <a href="https://github.com/jeiel85/boardlink-web/blob/main/README.md">README</a>
+        </div>
+      </div>
+      <div class="wrap note">
+        “BoardLink” is a provisional working name; branding may change before public release.
+        Nearby discovery is approximate and is not exact physical proximity.
+      </div>
+    </footer>
+  </body>
+</html>
