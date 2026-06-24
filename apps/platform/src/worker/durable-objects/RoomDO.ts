@@ -1,15 +1,17 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { Env } from '../index.js';
-import { parseC2SMessage } from '@boardlink/protocol';
+import { parseC2SMessage, PROTOCOL_VERSION } from '@boardlink/protocol';
 import type { RoomPhase } from '@boardlink/protocol';
 import { verifySessionToken } from '../auth.js';
 import { getGame } from '../room/gameRegistry.js';
 import { memberRowToDto } from '../room/roomState.js';
 import type { MemberRow } from '../room/roomState.js';
+import { isProtocolCompatible, earliestAlarm, shouldDisconnectForInvalid } from '../room/policy.js';
 
 // ---------- constants ----------
 
 const ROOM_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours
+const COMPLETED_CLEANUP_MS = 5 * 60 * 1000; // keep a finished match resumable briefly, then clean up
 const MAX_MEMBERS = 8;
 const MSG_RATE_LIMIT = 30;
 const MSG_RATE_WINDOW_MS = 1_000;
@@ -25,6 +27,7 @@ interface WsAttachment {
   authenticated: boolean;
   msgTimestamps: number[];
   msgCount: number;
+  invalidCount: number; // running count of malformed frames → disconnect after 3
 }
 
 // ---------- RoomDO ----------
@@ -243,6 +246,7 @@ export class RoomDO extends DurableObject<Env> {
       authenticated: false,
       msgTimestamps: [],
       msgCount: 0,
+      invalidCount: 0,
     };
     server.serializeAttachment(attachment);
 
@@ -280,6 +284,13 @@ export class RoomDO extends DurableObject<Env> {
 
     const result = parseC2SMessage(raw);
     if (!result.ok) {
+      att.invalidCount++;
+      ws.serializeAttachment(att);
+      if (shouldDisconnectForInvalid(att.invalidCount)) {
+        this.sendError(ws, 'TOO_MANY_INVALID', 'Too many malformed messages');
+        ws.close(4003, 'Invalid schema threshold exceeded');
+        return;
+      }
       this.sendError(ws, 'PARSE_ERROR', result.error);
       return;
     }
@@ -301,7 +312,11 @@ export class RoomDO extends DurableObject<Env> {
         ws.close(4001, 'Unauthenticated');
         return;
       }
-      await this.handleClientHello(ws, att, msg.payload as { sessionToken: string });
+      await this.handleClientHello(
+        ws,
+        att,
+        msg.payload as { sessionToken: string; protocolVersion?: string },
+      );
       return;
     }
 
@@ -367,20 +382,47 @@ export class RoomDO extends DurableObject<Env> {
   }
 
   async alarm(): Promise<void> {
+    const now = Date.now();
     const matchAlarmMs = this.getMeta('match_alarm_ms');
-    if (matchAlarmMs) {
-      const alarmMs = parseInt(matchAlarmMs, 10);
-      const now = Date.now();
-      if (now >= alarmMs) {
-        await this.handleMatchTick(now);
-        return;
-      }
+    const expiryMs = parseInt(this.getMeta('expires_ms') ?? '0', 10) || null;
+
+    // A match tick is due → process it, then make sure the expiry alarm survives
+    // (a DO has a single alarm slot, so the tick reschedule must not drop the TTL).
+    if (matchAlarmMs && now >= parseInt(matchAlarmMs, 10)) {
+      await this.handleMatchTick(now);
+      await this.rescheduleAlarm();
+      return;
     }
-    // Room TTL expiry
+
+    // Room expiry / cleanup is due → close the room.
+    if (expiryMs && now >= expiryMs) {
+      this.closeRoom('Room expired');
+      return;
+    }
+
+    // Otherwise the alarm fired early (clock skew / superseded) — reschedule the
+    // nearest pending boundary so neither the match nor the TTL is lost.
+    await this.rescheduleAlarm();
+  }
+
+  // Set the single DO alarm to whichever comes first: the next match tick or the
+  // room-expiry/cleanup time.
+  private async rescheduleAlarm(): Promise<void> {
+    const matchAlarmMs = this.getMeta('match_alarm_ms');
+    const next = earliestAlarm([
+      matchAlarmMs ? parseInt(matchAlarmMs, 10) : null,
+      parseInt(this.getMeta('expires_ms') ?? '0', 10) || null,
+    ]);
+    if (next !== null) {
+      await this.ctx.storage.setAlarm(next);
+    }
+  }
+
+  private closeRoom(reason: string): void {
     this.setMeta('phase', 'CLOSED');
     for (const ws of this.ctx.getWebSockets()) {
       try {
-        ws.close(4002, 'Room expired');
+        ws.close(4002, reason);
       } catch {
         /* already closed */
       }
@@ -392,8 +434,22 @@ export class RoomDO extends DurableObject<Env> {
   private async handleClientHello(
     ws: WebSocket,
     att: WsAttachment,
-    payload: { sessionToken: string },
+    payload: { sessionToken: string; protocolVersion?: string },
   ): Promise<void> {
+    // Version compatibility: same protocol major required (docs/05).
+    const clientProtocol = payload.protocolVersion ?? '';
+    if (!isProtocolCompatible(clientProtocol, PROTOCOL_VERSION)) {
+      this.send(ws, {
+        messageType: 'SESSION_REJECTED',
+        payload: {
+          reason: 'INCOMPATIBLE_PROTOCOL',
+          message: `Server requires protocol ${PROTOCOL_VERSION}; client sent '${clientProtocol || 'none'}'`,
+        },
+      });
+      ws.close(4005, 'Incompatible protocol');
+      return;
+    }
+
     const user = await verifySessionToken(payload.sessionToken, this.env);
     if (!user) {
       this.send(ws, {
@@ -462,19 +518,15 @@ export class RoomDO extends DurableObject<Env> {
         payload: { member: memberRowToDto(newRow), serverMs: Date.now() },
       });
     } else {
-      // Reconnect: validate resume token if provided
-      const tokenOk = payload.resumeToken && existing.resume_token === payload.resumeToken;
-      if (!tokenOk) {
-        // Still allow, just refresh token
-        const refreshed: MemberRow = {
-          ...existing,
-          status: 'CONNECTED',
-          resume_token: this.generateToken(),
-        };
-        this.upsertMember(refreshed);
-      } else {
-        this.updateMemberStatus(att.userId, 'CONNECTED');
-      }
+      // Reconnect. A matching resume token marks this a trusted resume; either
+      // way we rotate the token after use (docs/11: "Rotate resume tokens after
+      // use") so a captured token can't be replayed.
+      const refreshed: MemberRow = {
+        ...existing,
+        status: 'CONNECTED',
+        resume_token: this.generateToken(),
+      };
+      this.upsertMember(refreshed);
     }
 
     const updatedMembers = this.getAllMembers();
@@ -585,14 +637,15 @@ export class RoomDO extends DurableObject<Env> {
     this.setMeta('match_state', stateJson);
     this.setMeta('phase', 'IN_MATCH');
 
-    // Schedule alarm if game needs it
+    // Schedule the match alarm if the game needs one, then reschedule so it
+    // coexists with the room-expiry alarm (single DO alarm slot).
     if (game.getNextAlarmMs) {
       const alarmMs = game.getNextAlarmMs(initialState, now);
       if (alarmMs !== null) {
         this.setMeta('match_alarm_ms', String(alarmMs));
-        await this.ctx.storage.setAlarm(alarmMs);
       }
     }
+    await this.rescheduleAlarm();
 
     this.broadcast({
       messageType: 'MATCH_STARTED',
@@ -688,6 +741,10 @@ export class RoomDO extends DurableObject<Env> {
     if (result) {
       const finalHash = await game.canonicalHash(newState);
       this.setMeta('phase', 'COMPLETED');
+      this.setMeta('match_alarm_ms', '');
+      // Deliver the result, then keep the room briefly resumable before cleanup.
+      this.setMeta('expires_ms', String(Date.now() + COMPLETED_CLEANUP_MS));
+      await this.rescheduleAlarm();
       this.broadcast({
         messageType: 'MATCH_COMPLETED',
         payload: {
@@ -698,15 +755,11 @@ export class RoomDO extends DurableObject<Env> {
         },
       });
     } else if (game.getNextAlarmMs) {
-      // Update alarm if needed
       const nextAlarm = game.getNextAlarmMs(newState, serverReceivedAtMs);
       if (nextAlarm !== null) {
-        const prevAlarmMs = this.getMeta('match_alarm_ms');
-        if (!prevAlarmMs || nextAlarm !== parseInt(prevAlarmMs, 10)) {
-          this.setMeta('match_alarm_ms', String(nextAlarm));
-          await this.ctx.storage.setAlarm(nextAlarm);
-        }
+        this.setMeta('match_alarm_ms', String(nextAlarm));
       }
+      await this.rescheduleAlarm();
     }
 
     // Emit state hash every 10 events for client-side integrity checks
@@ -790,6 +843,8 @@ export class RoomDO extends DurableObject<Env> {
     if (result) {
       const finalHash = await game.canonicalHash(newState);
       this.setMeta('phase', 'COMPLETED');
+      // match_alarm_ms was already cleared at the top of this method.
+      this.setMeta('expires_ms', String(Date.now() + COMPLETED_CLEANUP_MS));
       this.broadcast({
         messageType: 'MATCH_COMPLETED',
         payload: {
@@ -799,15 +854,15 @@ export class RoomDO extends DurableObject<Env> {
           serverMs: nowMs,
         },
       });
+      // Caller (alarm) reschedules the alarm to the cleanup time afterwards.
       return;
     }
 
-    // Schedule next alarm
+    // Record the next match alarm; the caller (alarm) reschedules against the TTL.
     if (game.getNextAlarmMs) {
       const nextAlarm = game.getNextAlarmMs(newState, nowMs);
       if (nextAlarm !== null) {
         this.setMeta('match_alarm_ms', String(nextAlarm));
-        await this.ctx.storage.setAlarm(nextAlarm);
       }
     }
   }
