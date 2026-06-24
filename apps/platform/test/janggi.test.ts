@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  janggiGame,
-  type JanggiState,
-  type JanggiCommand,
-} from '../src/games/janggi/index.js';
+import { janggiGame, type JanggiState, type JanggiCommand } from '../src/games/janggi/index.js';
 import type { GamePlayer, GameActor } from '@boardlink/protocol';
 
 const PLAYERS: GamePlayer[] = [
