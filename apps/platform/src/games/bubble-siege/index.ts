@@ -1,6 +1,13 @@
 // Bubble Siege — goal-06 game module.
-// 2-player asymmetric: Attacker spawns balls, Defender pops them.
-// Pure TypeScript; no Cloudflare, React, or Node.js imports.
+// 2-player asymmetric, real-time: in each round the attacker spawns balls and the
+// defender pops them. Roles switch between the two rounds. Each player's score is
+// the number of balls still alive at the end of THEIR attack round; higher total
+// wins, equal is a draw.
+//
+// Conforms to docs/10-bubble-siege.md.
+// Pure TypeScript; no Cloudflare, React, or Node.js imports. Deterministic:
+// no Date.now / Math.random — time enters only via serverReceivedAtMs / serverMs
+// arguments, all coordinates are integers, distance checks use integer math.
 
 import type {
   GameModule,
@@ -12,65 +19,82 @@ import type {
 } from '@boardlink/protocol';
 import { computeStateHash } from '@boardlink/protocol';
 
-// ---------- constants ----------
+// ---------- constants (spec defaults) ----------
 
 const ROUND_DURATION_MS = 10_000;
-const BALL_TTL_MS = 10_000;
+const COUNTDOWN_MS = 3_000;
 const MAX_BALLS = 12;
 const SPAWN_COOLDOWN_MS = 120;
+const BALL_RADIUS = 45;
+const EDGE_MARGIN = 20; // beyond radius
+const MIN_CENTER_DISTANCE = 65;
+const POP_TOLERANCE = 15; // documented accessibility tolerance
 const TOTAL_ROUNDS = 2;
 const ARENA_SIZE = 1000;
 
 // ---------- domain types ----------
 
+export type Side = 'A' | 'B';
+
 export interface Ball {
   id: string;
   x: number;
   y: number;
-  spawnedAtMs: number;
-  expiresAtMs: number;
-}
-
-export interface RoundScore {
-  attackerScore: number;
-  defenderScore: number;
+  radius: number;
+  spawnedAtServerMs: number;
 }
 
 export interface BubbleSiegeConfig {
   roundDurationMs: number;
-  ballTtlMs: number;
+  countdownMs: number;
   maxBalls: number;
   spawnCooldownMs: number;
+  ballRadius: number;
+  edgeMargin: number;
+  minCenterDistance: number;
+  popTolerance: number;
 }
 
 export interface BubbleSiegeState {
-  phase: 'WAITING' | 'IN_ROUND' | 'ROUND_END' | 'GAME_OVER';
-  currentRound: number;
-  roundStartMs: number;
-  roundEndMs: number;
-  balls: Record<string, Ball>;
-  attackerUserId: string;
-  defenderUserId: string;
+  phase: 'COUNTDOWN' | 'ACTIVE' | 'GAME_OVER';
+  currentRound: number; // 1..TOTAL_ROUNDS
+  countdownEndMs: number; // COUNTDOWN ends → round becomes ACTIVE
+  roundEndMs: number; // ACTIVE round ends
+  balls: Record<string, Ball>; // live (unpopped) balls in the current round
+  playerA: string; // seat 0 userId
+  playerB: string; // seat 1 userId
+  firstAttacker: Side; // who attacks in round 1 (seed-derived)
   attackerLastSpawnMs: number;
+  scoreA: number | null; // balls alive at end of A's attack round
+  scoreB: number | null;
+  // flattened config (kept on state so evolve/decide need no external lookup)
   roundDurationMs: number;
-  ballTtlMs: number;
+  countdownMs: number;
   maxBalls: number;
   spawnCooldownMs: number;
-  scores: RoundScore[];
+  ballRadius: number;
+  edgeMargin: number;
+  minCenterDistance: number;
+  popTolerance: number;
 }
 
 // ---------- command types ----------
 
 export interface SpawnBallCommand {
   type: 'SPAWN_BALL';
-  ballId: string;
+  commandId: string;
   x: number;
   y: number;
+  clientInputAtMs?: number;
 }
 
 export interface PopBallCommand {
   type: 'POP_BALL';
+  commandId: string;
   ballId: string;
+  x: number;
+  y: number;
+  clientInputAtMs?: number;
 }
 
 export type BubbleSiegeCommand = SpawnBallCommand | PopBallCommand;
@@ -82,65 +106,96 @@ export interface BallSpawnedEvent {
   ballId: string;
   x: number;
   y: number;
-  spawnedAtMs: number;
-  expiresAtMs: number;
+  radius: number;
+  spawnedAtServerMs: number;
 }
 
 export interface BallPoppedEvent {
   type: 'BALL_POPPED';
   ballId: string;
-  poppedAtMs: number;
+  poppedAtServerMs: number;
+}
+
+export interface RoundStartedEvent {
+  type: 'ROUND_STARTED';
+  round: number;
+  attackerSide: Side;
+  startedAtServerMs: number;
 }
 
 export interface RoundEndedEvent {
   type: 'ROUND_ENDED';
   round: number;
-  survivingBallCount: number;
-  poppedBallCount: number;
-  attackerScore: number;
-  defenderScore: number;
+  attackerSide: Side;
+  score: number; // surviving balls = attacker's round score
+  endedAtServerMs: number;
+  nextCountdownEndMs: number | null; // null when this was the last round
+  nextRoundEndMs: number | null;
 }
 
 export interface GameOverEvent {
   type: 'GAME_OVER';
-  attackerTotal: number;
-  defenderTotal: number;
-  winnerId: string;
+  scoreA: number;
+  scoreB: number;
+  winnerId: string | null; // null = draw
 }
 
-export type BubbleSiegeEvent = BallSpawnedEvent | BallPoppedEvent | RoundEndedEvent | GameOverEvent;
+export type BubbleSiegeEvent =
+  | BallSpawnedEvent
+  | BallPoppedEvent
+  | RoundStartedEvent
+  | RoundEndedEvent
+  | GameOverEvent;
 
-// ---------- views ----------
+// ---------- views & result ----------
 
 export interface BubbleSiegeView {
   phase: BubbleSiegeState['phase'];
   currentRound: number;
   myRole: 'ATTACKER' | 'DEFENDER' | 'SPECTATOR';
   balls: Ball[];
-  scores: RoundScore[];
+  activeBallCount: number;
+  countdownEndMs: number;
   roundEndMs: number;
+  scoreA: number | null;
+  scoreB: number | null;
 }
 
 export interface BubbleSiegeResult {
-  winnerId: string;
-  attackerTotal: number;
-  defenderTotal: number;
+  winnerId: string | null;
+  scoreA: number;
+  scoreB: number;
+  isDraw: boolean;
 }
 
 // ---------- helpers ----------
 
-function activeBalls(state: BubbleSiegeState, nowMs: number): Ball[] {
-  return Object.values(state.balls).filter((b) => b.expiresAtMs > nowMs);
+function deriveFirstAttacker(seed: string): Side {
+  let sum = 0;
+  for (let i = 0; i < seed.length; i++) sum += seed.charCodeAt(i);
+  return sum % 2 === 0 ? 'A' : 'B';
 }
 
-function computeRoundScores(
-  state: BubbleSiegeState,
-  endMs: number,
-): { surviving: number; popped: number } {
-  const allBalls = Object.values(state.balls);
-  const surviving = allBalls.filter((b) => b.expiresAtMs > endMs).length;
-  const popped = allBalls.length - surviving;
-  return { surviving, popped };
+function attackerSideForRound(state: BubbleSiegeState, round: number): Side {
+  if (round === 1) return state.firstAttacker;
+  return state.firstAttacker === 'A' ? 'B' : 'A';
+}
+
+function sideUserId(state: BubbleSiegeState, side: Side): string {
+  return side === 'A' ? state.playerA : state.playerB;
+}
+
+function currentAttackerId(state: BubbleSiegeState): string {
+  return sideUserId(state, attackerSideForRound(state, state.currentRound));
+}
+
+function currentDefenderId(state: BubbleSiegeState): string {
+  const att = attackerSideForRound(state, state.currentRound);
+  return sideUserId(state, att === 'A' ? 'B' : 'A');
+}
+
+function liveBallCount(state: BubbleSiegeState): number {
+  return Object.keys(state.balls).length;
 }
 
 // ---------- metadata ----------
@@ -154,7 +209,7 @@ const metadata: GameMetadata = {
   supportsTeams: false,
   supportsSpectators: true,
   isRealtime: true,
-  recommendedOrientation: 'landscape',
+  recommendedOrientation: 'any',
 };
 
 // ---------- module ----------
@@ -171,19 +226,26 @@ export const bubbleSiegeGame: GameModule<
 
   validateConfig(input: unknown): BubbleSiegeConfig {
     const c = (typeof input === 'object' && input !== null ? input : {}) as Record<string, unknown>;
+    const positive = (key: string, def: number): number =>
+      typeof c[key] === 'number' && (c[key] as number) > 0 ? (c[key] as number) : def;
+    const nonNegative = (key: string, def: number): number =>
+      typeof c[key] === 'number' && (c[key] as number) >= 0 ? (c[key] as number) : def;
     return {
-      roundDurationMs:
-        typeof c['roundDurationMs'] === 'number' ? c['roundDurationMs'] : ROUND_DURATION_MS,
-      ballTtlMs: typeof c['ballTtlMs'] === 'number' ? c['ballTtlMs'] : BALL_TTL_MS,
-      maxBalls: typeof c['maxBalls'] === 'number' ? c['maxBalls'] : MAX_BALLS,
-      spawnCooldownMs:
-        typeof c['spawnCooldownMs'] === 'number' ? c['spawnCooldownMs'] : SPAWN_COOLDOWN_MS,
+      roundDurationMs: positive('roundDurationMs', ROUND_DURATION_MS),
+      countdownMs: positive('countdownMs', COUNTDOWN_MS),
+      maxBalls: positive('maxBalls', MAX_BALLS),
+      spawnCooldownMs: nonNegative('spawnCooldownMs', SPAWN_COOLDOWN_MS),
+      ballRadius: positive('ballRadius', BALL_RADIUS),
+      edgeMargin: nonNegative('edgeMargin', EDGE_MARGIN),
+      minCenterDistance: positive('minCenterDistance', MIN_CENTER_DISTANCE),
+      popTolerance: nonNegative('popTolerance', POP_TOLERANCE),
     };
   },
 
   createInitialState({
     config,
     players,
+    seed,
     startsAtServerMs,
   }: {
     config: BubbleSiegeConfig;
@@ -191,23 +253,28 @@ export const bubbleSiegeGame: GameModule<
     seed: string;
     startsAtServerMs: number;
   }): BubbleSiegeState {
-    const attacker = players[0];
-    const defender = players[1];
-    const roundEndMs = startsAtServerMs + config.roundDurationMs;
+    const countdownEndMs = startsAtServerMs + config.countdownMs;
+    const roundEndMs = countdownEndMs + config.roundDurationMs;
     return {
-      phase: 'IN_ROUND',
+      phase: 'COUNTDOWN',
       currentRound: 1,
-      roundStartMs: startsAtServerMs,
+      countdownEndMs,
       roundEndMs,
       balls: {},
-      attackerUserId: attacker.userId,
-      defenderUserId: defender.userId,
+      playerA: players[0].userId,
+      playerB: players[1].userId,
+      firstAttacker: deriveFirstAttacker(seed),
       attackerLastSpawnMs: 0,
+      scoreA: null,
+      scoreB: null,
       roundDurationMs: config.roundDurationMs,
-      ballTtlMs: config.ballTtlMs,
+      countdownMs: config.countdownMs,
       maxBalls: config.maxBalls,
       spawnCooldownMs: config.spawnCooldownMs,
-      scores: [],
+      ballRadius: config.ballRadius,
+      edgeMargin: config.edgeMargin,
+      minCenterDistance: config.minCenterDistance,
+      popTolerance: config.popTolerance,
     };
   },
 
@@ -222,7 +289,7 @@ export const bubbleSiegeGame: GameModule<
     command: BubbleSiegeCommand;
     serverReceivedAtMs: number;
   }): CommandValidation {
-    if (state.phase !== 'IN_ROUND') {
+    if (state.phase !== 'ACTIVE') {
       return { valid: false, reason: 'Round is not active' };
     }
     if (serverReceivedAtMs >= state.roundEndMs) {
@@ -231,34 +298,53 @@ export const bubbleSiegeGame: GameModule<
 
     switch (command.type) {
       case 'SPAWN_BALL': {
-        if (actor.userId !== state.attackerUserId) {
-          return { valid: false, reason: 'Only the attacker can spawn balls' };
+        if (actor.userId !== currentAttackerId(state)) {
+          return { valid: false, reason: 'Only the current attacker can spawn balls' };
         }
-        const cooldownOk = serverReceivedAtMs - state.attackerLastSpawnMs >= state.spawnCooldownMs;
-        if (!cooldownOk) {
+        if (state.balls[command.commandId]) {
+          return { valid: false, reason: 'Duplicate spawn command' };
+        }
+        if (serverReceivedAtMs - state.attackerLastSpawnMs < state.spawnCooldownMs) {
           return { valid: false, reason: 'Spawn cooldown not elapsed' };
         }
-        const liveBalls = activeBalls(state, serverReceivedAtMs);
-        if (liveBalls.length >= state.maxBalls) {
+        if (liveBallCount(state) >= state.maxBalls) {
           return { valid: false, reason: 'Maximum active balls reached' };
         }
-        const x = command.x;
-        const y = command.y;
-        if (x < 0 || x > ARENA_SIZE || y < 0 || y > ARENA_SIZE) {
-          return { valid: false, reason: 'Coordinates out of arena bounds' };
+        const { x, y } = command;
+        if (!Number.isInteger(x) || !Number.isInteger(y)) {
+          return { valid: false, reason: 'Coordinates must be integers' };
+        }
+        const minCenter = state.ballRadius + state.edgeMargin;
+        const maxCenter = ARENA_SIZE - state.ballRadius - state.edgeMargin;
+        if (x < minCenter || x > maxCenter || y < minCenter || y > maxCenter) {
+          return { valid: false, reason: 'Coordinates violate edge margin' };
+        }
+        const minDistSq = state.minCenterDistance * state.minCenterDistance;
+        for (const ball of Object.values(state.balls)) {
+          const dx = ball.x - x;
+          const dy = ball.y - y;
+          if (dx * dx + dy * dy < minDistSq) {
+            return { valid: false, reason: 'Too close to an existing ball' };
+          }
         }
         return { valid: true };
       }
       case 'POP_BALL': {
-        if (actor.userId !== state.defenderUserId) {
-          return { valid: false, reason: 'Only the defender can pop balls' };
+        if (actor.userId !== currentDefenderId(state)) {
+          return { valid: false, reason: 'Only the current defender can pop balls' };
         }
         const ball = state.balls[command.ballId];
         if (!ball) {
-          return { valid: false, reason: 'Ball not found' };
+          return { valid: false, reason: 'Ball not found or already popped' };
         }
-        if (ball.expiresAtMs <= serverReceivedAtMs) {
-          return { valid: false, reason: 'Ball has already expired' };
+        if (!Number.isInteger(command.x) || !Number.isInteger(command.y)) {
+          return { valid: false, reason: 'Coordinates must be integers' };
+        }
+        const dx = ball.x - command.x;
+        const dy = ball.y - command.y;
+        const hitRadius = ball.radius + state.popTolerance;
+        if (dx * dx + dy * dy > hitRadius * hitRadius) {
+          return { valid: false, reason: 'Pointer outside ball hit radius' };
         }
         return { valid: true };
       }
@@ -280,11 +366,11 @@ export const bubbleSiegeGame: GameModule<
         return [
           {
             type: 'BALL_SPAWNED',
-            ballId: command.ballId,
+            ballId: command.commandId,
             x: command.x,
             y: command.y,
-            spawnedAtMs: serverReceivedAtMs,
-            expiresAtMs: serverReceivedAtMs + state.ballTtlMs,
+            radius: state.ballRadius,
+            spawnedAtServerMs: serverReceivedAtMs,
           },
         ];
       case 'POP_BALL':
@@ -292,7 +378,7 @@ export const bubbleSiegeGame: GameModule<
           {
             type: 'BALL_POPPED',
             ballId: command.ballId,
-            poppedAtMs: serverReceivedAtMs,
+            poppedAtServerMs: serverReceivedAtMs,
           },
         ];
     }
@@ -301,43 +387,46 @@ export const bubbleSiegeGame: GameModule<
   evolve(state: BubbleSiegeState, event: BubbleSiegeEvent): BubbleSiegeState {
     switch (event.type) {
       case 'BALL_SPAWNED': {
-        const newBalls = {
+        const balls = {
           ...state.balls,
           [event.ballId]: {
             id: event.ballId,
             x: event.x,
             y: event.y,
-            spawnedAtMs: event.spawnedAtMs,
-            expiresAtMs: event.expiresAtMs,
+            radius: event.radius,
+            spawnedAtServerMs: event.spawnedAtServerMs,
           },
         };
-        return { ...state, balls: newBalls, attackerLastSpawnMs: event.spawnedAtMs };
+        return { ...state, balls, attackerLastSpawnMs: event.spawnedAtServerMs };
       }
       case 'BALL_POPPED': {
-        const newBalls = { ...state.balls };
-        delete newBalls[event.ballId];
-        return { ...state, balls: newBalls };
+        const balls = { ...state.balls };
+        delete balls[event.ballId];
+        return { ...state, balls };
+      }
+      case 'ROUND_STARTED': {
+        return { ...state, phase: 'ACTIVE' };
       }
       case 'ROUND_ENDED': {
-        const newScores = [
-          ...state.scores,
-          { attackerScore: event.attackerScore, defenderScore: event.defenderScore },
-        ];
-        const nextRound = state.currentRound + 1;
-        const isGameOver = nextRound > TOTAL_ROUNDS;
-        if (isGameOver) {
-          return { ...state, balls: {}, scores: newScores, phase: 'ROUND_END' };
+        const scoreA = event.attackerSide === 'A' ? event.score : state.scoreA;
+        const scoreB = event.attackerSide === 'B' ? event.score : state.scoreB;
+        if (event.nextCountdownEndMs !== null && event.nextRoundEndMs !== null) {
+          return {
+            ...state,
+            scoreA,
+            scoreB,
+            balls: {},
+            phase: 'COUNTDOWN',
+            currentRound: state.currentRound + 1,
+            countdownEndMs: event.nextCountdownEndMs,
+            roundEndMs: event.nextRoundEndMs,
+            attackerLastSpawnMs: 0,
+          };
         }
-        return {
-          ...state,
-          balls: {},
-          scores: newScores,
-          phase: 'ROUND_END',
-          currentRound: nextRound,
-        };
+        return { ...state, scoreA, scoreB, balls: {} };
       }
       case 'GAME_OVER': {
-        return { ...state, phase: 'GAME_OVER' };
+        return { ...state, phase: 'GAME_OVER', scoreA: event.scoreA, scoreB: event.scoreB };
       }
     }
   },
@@ -350,29 +439,34 @@ export const bubbleSiegeGame: GameModule<
     viewer: GameViewer;
   }): BubbleSiegeView {
     let myRole: BubbleSiegeView['myRole'] = 'SPECTATOR';
-    if (viewer.userId === state.attackerUserId) myRole = 'ATTACKER';
-    else if (viewer.userId === state.defenderUserId) myRole = 'DEFENDER';
-
+    if (state.phase !== 'GAME_OVER') {
+      if (viewer.userId === currentAttackerId(state)) myRole = 'ATTACKER';
+      else if (viewer.userId === currentDefenderId(state)) myRole = 'DEFENDER';
+    }
     return {
       phase: state.phase,
       currentRound: state.currentRound,
       myRole,
       balls: Object.values(state.balls),
-      scores: state.scores,
+      activeBallCount: liveBallCount(state),
+      countdownEndMs: state.countdownEndMs,
       roundEndMs: state.roundEndMs,
+      scoreA: state.scoreA,
+      scoreB: state.scoreB,
     };
   },
 
   evaluateResult(state: BubbleSiegeState): BubbleSiegeResult | null {
     if (state.phase !== 'GAME_OVER') return null;
-    const attackerTotal = state.scores.reduce((s, r) => s + r.attackerScore, 0);
-    const defenderTotal = state.scores.reduce((s, r) => s + r.defenderScore, 0);
-    const winnerId = attackerTotal >= defenderTotal ? state.attackerUserId : state.defenderUserId;
-    return { winnerId, attackerTotal, defenderTotal };
+    const scoreA = state.scoreA ?? 0;
+    const scoreB = state.scoreB ?? 0;
+    const winnerId = scoreA > scoreB ? state.playerA : scoreB > scoreA ? state.playerB : null;
+    return { winnerId, scoreA, scoreB, isDraw: winnerId === null };
   },
 
   getNextAlarmMs(state: BubbleSiegeState, _nowMs: number): number | null {
-    if (state.phase === 'IN_ROUND') return state.roundEndMs;
+    if (state.phase === 'COUNTDOWN') return state.countdownEndMs;
+    if (state.phase === 'ACTIVE') return state.roundEndMs;
     return null;
   },
 
@@ -383,35 +477,68 @@ export const bubbleSiegeGame: GameModule<
     state: BubbleSiegeState;
     serverMs: number;
   }): readonly BubbleSiegeEvent[] {
-    if (state.phase !== 'IN_ROUND') return [];
-    if (serverMs < state.roundEndMs) return [];
-
-    const { surviving, popped } = computeRoundScores(state, state.roundEndMs);
-    const roundEndedEvent: RoundEndedEvent = {
-      type: 'ROUND_ENDED',
-      round: state.currentRound,
-      survivingBallCount: surviving,
-      poppedBallCount: popped,
-      attackerScore: surviving,
-      defenderScore: popped,
-    };
-
-    const isLastRound = state.currentRound >= TOTAL_ROUNDS;
-    if (isLastRound) {
-      const allScores = [...state.scores, { attackerScore: surviving, defenderScore: popped }];
-      const attackerTotal = allScores.reduce((s, r) => s + r.attackerScore, 0);
-      const defenderTotal = allScores.reduce((s, r) => s + r.defenderScore, 0);
-      const winnerId = attackerTotal >= defenderTotal ? state.attackerUserId : state.defenderUserId;
-      const gameOverEvent: GameOverEvent = {
-        type: 'GAME_OVER',
-        attackerTotal,
-        defenderTotal,
-        winnerId,
-      };
-      return [roundEndedEvent, gameOverEvent];
+    if (state.phase === 'COUNTDOWN') {
+      if (serverMs < state.countdownEndMs) return [];
+      return [
+        {
+          type: 'ROUND_STARTED',
+          round: state.currentRound,
+          attackerSide: attackerSideForRound(state, state.currentRound),
+          startedAtServerMs: serverMs,
+        },
+      ];
     }
 
-    return [roundEndedEvent];
+    if (state.phase === 'ACTIVE') {
+      if (serverMs < state.roundEndMs) return [];
+      const attackerSide = attackerSideForRound(state, state.currentRound);
+      const score = liveBallCount(state);
+      const isLastRound = state.currentRound >= TOTAL_ROUNDS;
+
+      if (!isLastRound) {
+        const nextCountdownEndMs = serverMs + state.countdownMs;
+        const nextRoundEndMs = nextCountdownEndMs + state.roundDurationMs;
+        return [
+          {
+            type: 'ROUND_ENDED',
+            round: state.currentRound,
+            attackerSide,
+            score,
+            endedAtServerMs: serverMs,
+            nextCountdownEndMs,
+            nextRoundEndMs,
+          },
+        ];
+      }
+
+      const finalScoreA = attackerSide === 'A' ? score : (state.scoreA ?? 0);
+      const finalScoreB = attackerSide === 'B' ? score : (state.scoreB ?? 0);
+      const winnerId =
+        finalScoreA > finalScoreB
+          ? state.playerA
+          : finalScoreB > finalScoreA
+            ? state.playerB
+            : null;
+      return [
+        {
+          type: 'ROUND_ENDED',
+          round: state.currentRound,
+          attackerSide,
+          score,
+          endedAtServerMs: serverMs,
+          nextCountdownEndMs: null,
+          nextRoundEndMs: null,
+        },
+        {
+          type: 'GAME_OVER',
+          scoreA: finalScoreA,
+          scoreB: finalScoreB,
+          winnerId,
+        },
+      ];
+    }
+
+    return [];
   },
 
   serializeState(state: BubbleSiegeState): unknown {
