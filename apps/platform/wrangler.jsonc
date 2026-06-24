@@ -23,8 +23,8 @@
   "d1_databases": [
     {
       "binding": "DIRECTORY_DB",
-      "database_name": "boardlink-directory-local",
-      "database_id": "replace-per-environment",
+      "database_name": "boardlink-directory",
+      "database_id": "8658dc2a-c00d-4e34-afe5-df8b484efa9c",
     },
   ],
   "ratelimits": [
