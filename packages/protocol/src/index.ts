@@ -5,3 +5,12 @@ export type { ProtocolEnvelope, ProtocolEnvelopeBase } from './envelope.js';
 export { ProtocolEnvelopeBaseSchema } from './envelope.js';
 export * from './messages.js';
 export { canonicalJson, computeStateHash } from './state-hash.js';
+export type {
+  GameMetadata,
+  GamePlayer,
+  GameActor,
+  GameViewer,
+  CommandValidation,
+  GameModule,
+  AnyGameModule,
+} from './game-sdk.js';

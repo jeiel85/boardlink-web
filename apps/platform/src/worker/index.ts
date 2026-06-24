@@ -10,6 +10,7 @@ import {
   handleFriendCodeRevoke,
   handleFriendCodeLookup,
 } from './auth.js';
+import { listGameIds } from './room/gameRegistry.js';
 
 // Export Durable Objects for Cloudflare runtime binding discovery
 export { RoomDO } from './durable-objects/RoomDO.js';
@@ -35,9 +36,53 @@ export interface Env {
   ENABLE_TEST_ENDPOINTS?: string;
 }
 
+// Allowed WebSocket origins: localhost dev, workers.dev, and (when set) custom domain
+function isAllowedOrigin(origin: string | null, env: Env): boolean {
+  if (!origin) return false;
+  if (!env.JWT_SECRET) return true; // dev/test: skip origin check
+  try {
+    const u = new URL(origin);
+    if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') return true;
+    if (u.hostname.endsWith('.workers.dev')) return true;
+    if (u.hostname.endsWith('.boardlink.io')) return true;
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+function generateRoomCode(): string {
+  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const bytes = new Uint8Array(6);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map((b) => chars[b % chars.length])
+    .join('');
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    // WebSocket room connection: /room/:code/ws
+    const wsMatch = url.pathname.match(/^\/room\/([A-Z0-9]{4,12})\/ws$/i);
+    if (wsMatch && request.headers.get('Upgrade') === 'websocket') {
+      const roomCode = wsMatch[1].toUpperCase();
+      const origin = request.headers.get('Origin');
+      if (!isAllowedOrigin(origin, env)) {
+        return addSecurityHeaders(
+          new Response(
+            JSON.stringify({
+              error: new BoardLinkError('FORBIDDEN', 'Origin not allowed').toJSON(),
+            }),
+            { status: 403, headers: { 'Content-Type': 'application/json' } },
+          ),
+        );
+      }
+      const id = env.ROOMS.idFromName(roomCode);
+      const stub = env.ROOMS.get(id);
+      return stub.fetch(request);
+    }
 
     // 1. Route API requests
     if (url.pathname.startsWith('/api/')) {
@@ -103,6 +148,56 @@ async function handleApiRequest(request: Request, url: URL, env: Env): Promise<R
   // 2. Auth verify endpoint
   if (url.pathname === '/api/auth/verify') {
     return await handleVerify(request, env);
+  }
+
+  // List available games
+  if (url.pathname === '/api/games' && request.method === 'GET') {
+    return new Response(JSON.stringify({ games: listGameIds() }), {
+      status: 200,
+      headers: jsonHeaders,
+    });
+  }
+
+  // Create a room
+  if (url.pathname === '/api/rooms' && request.method === 'POST') {
+    const user = await authenticateSession(request, env);
+    if (!user) {
+      return new Response(
+        JSON.stringify({
+          error: new BoardLinkError('UNAUTHORIZED', 'Authentication required').toJSON(),
+        }),
+        { status: 401, headers: jsonHeaders },
+      );
+    }
+    try {
+      const body = (await request.json().catch(() => ({}))) as { gameId?: string };
+      const roomCode = generateRoomCode();
+      const id = env.ROOMS.idFromName(roomCode);
+      const stub = env.ROOMS.get(id);
+      const initRes = await stub.fetch(
+        new Request('https://internal/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomCode,
+            ownerId: user.publicId,
+            ownerName: user.displayName,
+            gameId: body.gameId ?? null,
+          }),
+        }),
+      );
+      if (!initRes.ok) throw new Error('Failed to initialize room');
+      return new Response(JSON.stringify({ roomCode, gameId: body.gameId ?? null }), {
+        status: 201,
+        headers: jsonHeaders,
+      });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return new Response(
+        JSON.stringify({ error: new BoardLinkError('ROOM_CREATE_FAILED', msg).toJSON() }),
+        { status: 500, headers: jsonHeaders },
+      );
+    }
   }
 
   // 3. Friend Code Lookup endpoint (unprotected, rate-limited)
@@ -182,7 +277,10 @@ async function handleApiRequest(request: Request, url: URL, env: Env): Promise<R
         return await stub.fetch(new Request(new URL('/health', request.url)));
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
-        const err = new BoardLinkError('DO_PRESENCE_FAILED', msg || 'NetworkPresenceDO fetch failed');
+        const err = new BoardLinkError(
+          'DO_PRESENCE_FAILED',
+          msg || 'NetworkPresenceDO fetch failed',
+        );
         return new Response(JSON.stringify({ error: err.toJSON() }), {
           status: 500,
           headers: jsonHeaders,

@@ -240,6 +240,26 @@ export interface AuthenticatedUser {
   displayName: string;
 }
 
+// Verify a raw session token string (used by RoomDO for WS CLIENT_HELLO auth).
+export async function verifySessionToken(
+  token: string,
+  env: Pick<Env, 'JWT_SECRET'>,
+): Promise<AuthenticatedUser | null> {
+  const secret = env.JWT_SECRET || FALLBACK_SECRET;
+  const parts = token.split(':');
+  if (parts.length !== 4) return null;
+
+  const [publicId, displayName, expiresAtStr, sig] = parts;
+  const expiresAt = parseInt(expiresAtStr, 10);
+  if (isNaN(expiresAt) || Date.now() > expiresAt) return null;
+
+  const payload = `${publicId}:${displayName}:${expiresAt}`;
+  const isValid = await verifyHmac(secret, payload, sig);
+  if (!isValid) return null;
+
+  return { publicId, displayName };
+}
+
 export async function authenticateSession(
   request: Request,
   env: Env,

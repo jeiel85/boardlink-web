@@ -1,12 +1,28 @@
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
-export default tseslint.config(eslint.configs.recommended, ...tseslint.configs.recommended, {
-  ignores: [
-    '**/dist/**',
-    '**/node_modules/**',
-    'playwright-report/**',
-    'test-results/**',
-    'C:/Users/jeiel/.gemini/**',
-  ],
-});
+export default tseslint.config(
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      'playwright-report/**',
+      'test-results/**',
+      'C:/Users/jeiel/.gemini/**',
+    ],
+  },
+  eslint.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+    },
+  },
+);
