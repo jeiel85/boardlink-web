@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://boardlink.example/schemas/protocol-envelope.schema.json",
+  "title": "BoardLink Protocol Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "messageId", "messageType", "payload"],
+  "properties": {
+    "protocolVersion": {
+      "const": 1
+    },
+    "messageId": {
+      "type": "string",
+      "minLength": 16,
+      "maxLength": 128
+    },
+    "messageType": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "roomId": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128
+    },
+    "matchId": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128
+    },
+    "senderPublicId": {
+      "type": "string",
+      "minLength": 16,
+      "maxLength": 64
+    },
+    "clientSequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "serverSequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "sentAtClientMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "sentAtServerMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "acknowledgement": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "payload": {}
+  }
+}

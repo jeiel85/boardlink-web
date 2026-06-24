@@ -1,0 +1,12 @@
+{
+  "priorityA": [
+    "four-in-a-row",
+    "reversi",
+    "dots-and-boxes",
+    "number-baseball",
+    "quiz-buzzer",
+    "rps-tournament"
+  ],
+  "priorityB": ["yutnori", "fleet-grid", "secret-role", "majority-prediction"],
+  "priorityC": ["tap-territory", "color-catcher", "memory-raid", "sync-bomb", "path-block"]
+}

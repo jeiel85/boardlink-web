@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://boardlink.example/schemas/room-events.schema.json",
+  "title": "BoardLink Room Events",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "memberId", "displayName"],
+      "properties": {
+        "type": {
+          "const": "ROOM_MEMBER_JOINED"
+        },
+        "memberId": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 64
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "memberId"],
+      "properties": {
+        "type": {
+          "const": "ROOM_MEMBER_LEFT"
+        },
+        "memberId": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "startsAtServerMs"],
+      "properties": {
+        "type": {
+          "const": "MATCH_SCHEDULED"
+        },
+        "startsAtServerMs": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  ]
+}

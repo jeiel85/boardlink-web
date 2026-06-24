@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://boardlink.example/schemas/bubble-siege.schema.json",
+  "title": "Bubble Siege Commands and Events",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "commandId", "x", "y", "clientInputAtMs"],
+      "properties": {
+        "type": {
+          "const": "SPAWN_BALL"
+        },
+        "commandId": {
+          "type": "string"
+        },
+        "x": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "clientInputAtMs": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "commandId", "ballId", "x", "y", "clientInputAtMs"],
+      "properties": {
+        "type": {
+          "const": "POP_BALL"
+        },
+        "commandId": {
+          "type": "string"
+        },
+        "ballId": {
+          "type": "string"
+        },
+        "x": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "clientInputAtMs": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "ballId", "x", "y", "radius", "spawnedAtServerMs"],
+      "properties": {
+        "type": {
+          "const": "BALL_SPAWNED"
+        },
+        "ballId": {
+          "type": "string"
+        },
+        "x": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "radius": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        },
+        "spawnedAtServerMs": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "ballId", "poppedAtServerMs"],
+      "properties": {
+        "type": {
+          "const": "BALL_POPPED"
+        },
+        "ballId": {
+          "type": "string"
+        },
+        "poppedAtServerMs": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  ]
+}

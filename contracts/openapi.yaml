@@ -1,0 +1,119 @@
+openapi: 3.1.0
+info:
+  title: BoardLink HTTP API
+  version: 0.1.0
+servers:
+  - url: https://play.example.com
+paths:
+  /api/health:
+    get:
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service health
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, buildId, protocolVersion]
+                properties:
+                  ok:
+                    type: boolean
+                  buildId:
+                    type: string
+                  protocolVersion:
+                    type: integer
+
+  /api/identity/challenge:
+    post:
+      operationId: createIdentityChallenge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [publicId, publicKeyJwk]
+              properties:
+                publicId:
+                  type: string
+                publicKeyJwk:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Challenge
+        '429':
+          description: Rate limited
+
+  /api/identity/prove:
+    post:
+      operationId: proveIdentity
+      responses:
+        '200':
+          description: Short-lived session issued
+        '401':
+          description: Proof failed
+
+  /api/friends/lookup/{friendCode}:
+    get:
+      operationId: lookupFriendCode
+      parameters:
+        - name: friendCode
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[A-Z2-9]{4}-[A-Z2-9]{4}$'
+      responses:
+        '200':
+          description: Minimal public profile
+        '404':
+          description: Not found
+        '429':
+          description: Rate limited
+
+  /api/invitations/{token}:
+    get:
+      operationId: previewInvitation
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invitation preview
+        '404':
+          description: Invalid or expired
+
+  /api/rooms:
+    post:
+      operationId: createRoom
+      responses:
+        '201':
+          description: Room created
+        '401':
+          description: Identity session required
+        '429':
+          description: Rate limited
+
+  /api/rooms/{roomCode}/websocket:
+    get:
+      operationId: upgradeRoomWebSocket
+      parameters:
+        - name: roomCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '101':
+          description: WebSocket upgraded
+        '400':
+          description: Invalid upgrade
+        '401':
+          description: Identity session required
+        '426':
+          description: Protocol update required

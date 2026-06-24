@@ -1,0 +1,205 @@
+{
+  "name": "boardlink-web-design-bundle",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "bytes": 4866,
+      "sha256": "c2e3c5814c95a0d787b9effc0aba6c69b4d8fa83a31f3a152333e7d12f1478f2"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3920,
+      "sha256": "977c106486fa5c62b2de23a4fda7168d11e9067996ff9858949b32f19d310812"
+    },
+    {
+      "path": "contracts/bubble-siege.schema.json",
+      "bytes": 2740,
+      "sha256": "598054b623b9e2ebf17c263a9a08e550a1714e4d698b733d635b027afec97776"
+    },
+    {
+      "path": "contracts/openapi.yaml",
+      "bytes": 2859,
+      "sha256": "449f46ff7b0ff62504b1d7def65f446125354d7fa4e917f77b4eea3966a863a8"
+    },
+    {
+      "path": "contracts/protocol-envelope.schema.json",
+      "bytes": 1271,
+      "sha256": "91ccc937556a19bdea18edf4f33cd6c124087ac1cae0be2e2e9453238021dbf4"
+    },
+    {
+      "path": "contracts/room-events.schema.json",
+      "bytes": 1223,
+      "sha256": "160233bc9ad67317d0a3b5084c57f2fde6e8dc45b6a8d23b0138701586dae078"
+    },
+    {
+      "path": "docs/00-product-brief.md",
+      "bytes": 3747,
+      "sha256": "c7bc83ee327bd4da4db7c1596f2b67db82305fdf426ecba24053339f3e67b893"
+    },
+    {
+      "path": "docs/01-scope-and-roadmap.md",
+      "bytes": 2345,
+      "sha256": "d35b5b682722138f199dc59b5d0fbcd3a51a2f350955734e14ac3f93d0827a38"
+    },
+    {
+      "path": "docs/02-system-architecture.md",
+      "bytes": 5259,
+      "sha256": "ae54049aa8665c1637f22da28d0fb3c1b66f13dcbaccae6382a7bbb00c88e00e"
+    },
+    {
+      "path": "docs/03-repository-structure.md",
+      "bytes": 3576,
+      "sha256": "59eb844fd11b9bc81ecdebf5a9a8f867523009dfb749d507de2779a46f30a7ea"
+    },
+    {
+      "path": "docs/04-domain-model.md",
+      "bytes": 3200,
+      "sha256": "3767aca3d90d5426163f0cc808a83bf61c3637ca74fe642d4d28a63a4893c35e"
+    },
+    {
+      "path": "docs/05-realtime-protocol.md",
+      "bytes": 4150,
+      "sha256": "3885c9ceb1931fe0b0ec997fa14bd42b7ed5295ea508a36868bfaaa2a9585aa4"
+    },
+    {
+      "path": "docs/06-anonymous-identity-friends.md",
+      "bytes": 3704,
+      "sha256": "4ce1d21bd2430c42088d72f59b2aa2fa6e669b0ed8d13677526daa52407aa45d"
+    },
+    {
+      "path": "docs/07-nearby-presence.md",
+      "bytes": 3034,
+      "sha256": "5e3a0b6f1367b61e29648b19f915af47b4ba4565cab0112111025793b19f6128"
+    },
+    {
+      "path": "docs/08-pwa-browser-experience.md",
+      "bytes": 3956,
+      "sha256": "8e76c8a97f727a1ccd17a2a2952e9ecc4ac0897dd3fd8fb324922d300e7d9c01"
+    },
+    {
+      "path": "docs/09-game-module-sdk.md",
+      "bytes": 2979,
+      "sha256": "3e72cbf212074051e04179e5564b904b6be62c52978e85321b6432a082b79713"
+    },
+    {
+      "path": "docs/10-bubble-siege.md",
+      "bytes": 5727,
+      "sha256": "85cc3fca0ad3749f1a2d65a7ef47cbb53836b4fe48e5dcc3ef12d77f7249b15b"
+    },
+    {
+      "path": "docs/11-security-privacy-abuse.md",
+      "bytes": 4965,
+      "sha256": "3290b725da498100e7297126a6771780014f83a7ef157279252d468907414392"
+    },
+    {
+      "path": "docs/12-testing-release.md",
+      "bytes": 3452,
+      "sha256": "2e32dc50e7bcbe55fdf0081161015ae30bb10e38c3ac90d341547e48f4e2650c"
+    },
+    {
+      "path": "docs/13-deployment-operations.md",
+      "bytes": 3356,
+      "sha256": "824476fac8544b8652cc34e13e4cb7d1616f843aff08b49e54faf0026fb82741"
+    },
+    {
+      "path": "docs/14-ui-flows.md",
+      "bytes": 2522,
+      "sha256": "20c9d7eb2d1644c08e32bb8cf9d4f2d0b88aebedd31014dc10eb2cc12a6c4ef6"
+    },
+    {
+      "path": "docs/15-decisions-and-risks.md",
+      "bytes": 3140,
+      "sha256": "55bd4bd7679fe30529d24aa1ce9b55cb636a063799f2621375a36e5f46c1769d"
+    },
+    {
+      "path": "docs/16-source-references.md",
+      "bytes": 3708,
+      "sha256": "379ba19ede1155d01d96a499b133020a9bd26ce0c32aec0de467a3a932b66a3e"
+    },
+    {
+      "path": "goals/goal-00-bootstrap.md",
+      "bytes": 2292,
+      "sha256": "94d3995694c842ccba1aa283a2e09128e41d30396f845ac73957c7c61da5b6ac"
+    },
+    {
+      "path": "goals/goal-01-pwa-browser.md",
+      "bytes": 1776,
+      "sha256": "e5fa3be854b5b013ab2413f153013a4fae8ac358b71f00c20124e960b238b308"
+    },
+    {
+      "path": "goals/goal-02-identity.md",
+      "bytes": 1476,
+      "sha256": "7d3d0c749a00bb30e6aaf322027d755fe169b2d9711c933c1ead48c8fd1fa06c"
+    },
+    {
+      "path": "goals/goal-03-presence-friends.md",
+      "bytes": 1550,
+      "sha256": "d77fde925382ce3386ef0ec45a99bd5dd29f02a1b0884e441b4aa63aaac0bde0"
+    },
+    {
+      "path": "goals/goal-04-room-runtime.md",
+      "bytes": 1676,
+      "sha256": "693745af2b68f2de369737d778c00169e2ab6aa74e72f6bc18d03007ad25b22f"
+    },
+    {
+      "path": "goals/goal-05-game-sdk.md",
+      "bytes": 1232,
+      "sha256": "0f971372a671fde9ce03735fd4dbd4f1bf79864b9b47f22391f30938c6bc04b3"
+    },
+    {
+      "path": "goals/goal-06-bubble-siege.md",
+      "bytes": 1398,
+      "sha256": "ea7398866b334c2e2e4def62220520a783daf326891a2131d100dafd6161f196"
+    },
+    {
+      "path": "goals/goal-07-bingo.md",
+      "bytes": 1074,
+      "sha256": "d3e6cb1bcddf6a32a65346c6fce95af3f491a08f3e00ed8938b18a5e4132f9fb"
+    },
+    {
+      "path": "goals/goal-08-gomoku.md",
+      "bytes": 840,
+      "sha256": "d15f4377d6e52c24ea0e35abc292bf7dc0fd9f9aefb87d54b2caff618bf4db16"
+    },
+    {
+      "path": "goals/goal-09-release.md",
+      "bytes": 1623,
+      "sha256": "2c2ab058889282f8856092542edbb290c11952731f0ed3ac8f42bdc9409a830d"
+    },
+    {
+      "path": "goals/goal-10-chess-janggi.md",
+      "bytes": 866,
+      "sha256": "582e3f282b0b5cd8a4a1348a17bc0cbf2724c3457ccaa79f1da6826dd6aa517f"
+    },
+    {
+      "path": "goals/goal-template.md",
+      "bytes": 376,
+      "sha256": "b26bc2ad169632cdfb93bfd504b84aab8b92ac39eb9ce7f56763042e140d6d78"
+    },
+    {
+      "path": "reference/ci-github-actions.yml",
+      "bytes": 884,
+      "sha256": "000e7f7c7bff48bc02b2848c5beae02030dabe0d167588c447c24a549de2857b"
+    },
+    {
+      "path": "reference/env.example",
+      "bytes": 381,
+      "sha256": "da5cc71bd263b1af3f1fca3d3fcd5fbde88647ed0adc7f49d91cdbb88b7b3f30"
+    },
+    {
+      "path": "reference/package-layout.md",
+      "bytes": 952,
+      "sha256": "b7d7ab7952e9c04112db5da2634219726afceda92a6cccad37727dcf07e70c6f"
+    },
+    {
+      "path": "reference/threat-model.md",
+      "bytes": 1126,
+      "sha256": "215fea4ecc553532d1695fbeac74923774a88c95a6f15aecce02256809f74075"
+    },
+    {
+      "path": "reference/wrangler.jsonc",
+      "bytes": 1064,
+      "sha256": "747f815340fb12bd95b8aa3ee4e95950098eebf6cd5dfa5b6e8122e8a7220ee5"
+    }
+  ]
+}

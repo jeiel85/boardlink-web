@@ -1,0 +1,30 @@
+{
+  "name": "boardlink-monorepo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @boardlink/platform dev",
+    "build": "pnpm -r build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:workers": "pnpm --filter @boardlink/platform test:workers",
+    "test:e2e": "playwright test --config e2e/playwright.config.ts",
+    "check:protocol": "tsx scripts/check-protocol-compat.ts",
+    "check:no-tracking": "tsx scripts/validate-no-third-party-scripts.ts",
+    "generate:pwa-assets": "tsx scripts/generate-pwa-assets.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.16.0",
+    "@playwright/test": "^1.49.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "eslint": "^9.16.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.0"
+  }
+}

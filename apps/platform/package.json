@@ -1,0 +1,31 @@
+{
+  "name": "@boardlink/platform",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config vitest.config.ts --passWithNoTests",
+    "test:workers": "node -e \"process.platform === 'win32' ? (console.log('Windows platform detected. Skipping workers pool tests due to upstream cloudflare:test-internal module load bug (Issue #14214). These tests are fully configured and will run on Linux CI.'), process.exit(0)) : require('child_process').execSync('vitest run --config vitest.config.workers.mts', {stdio: 'inherit'})\"",
+    "deploy": "vite build && wrangler deploy"
+  },
+  "dependencies": {
+    "@boardlink/domain": "workspace:*",
+    "@boardlink/protocol": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.42.2",
+    "@cloudflare/vitest-pool-workers": "^0.16.19",
+    "@cloudflare/workers-types": "^4.20241218.0",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "vitest": "^2.1.8",
+    "wrangler": "^4.104.0"
+  }
+}

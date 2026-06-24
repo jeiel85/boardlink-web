@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Cloudflare Wrangler local state
+.wrangler/
+.dev.vars
+.dev.vars.*
+
+# Test / coverage artifacts
+coverage/
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# Vite cache
+.vite/
+
+# Environment files (keep reference/env.example tracked)
+.env
+.env.*
+!reference/env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
