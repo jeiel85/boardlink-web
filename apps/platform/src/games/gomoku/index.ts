@@ -292,6 +292,17 @@ export const gomokuGame: GameModule<
     };
   },
 
+  enumerateCommands({ state }: { state: GomokuState; actor: GameActor }): readonly GomokuCommand[] {
+    if (state.phase !== 'IN_PROGRESS') return [];
+    const out: GomokuCommand[] = [];
+    for (let i = 0; i < state.board.length; i++) {
+      if (state.board[i] === EMPTY) {
+        out.push({ type: 'PLACE_STONE', x: i % state.size, y: Math.floor(i / state.size) });
+      }
+    }
+    return out;
+  },
+
   evaluateResult(state: GomokuState): GomokuResult | null {
     if (state.phase !== 'COMPLETED') return null;
     const winningSeat = state.winnerId ? state.seats.indexOf(state.winnerId) : -1;

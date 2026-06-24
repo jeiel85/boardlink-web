@@ -545,6 +545,24 @@ export const janggiGame: GameModule<
     };
   },
 
+  enumerateCommands({
+    state,
+    actor,
+  }: {
+    state: JanggiState;
+    actor: GameActor;
+  }): readonly JanggiCommand[] {
+    if (state.phase !== 'IN_PROGRESS' || actor.seatIndex !== state.turnSeat) return [];
+    const color = colorForSeat(state.turnSeat);
+    const out: JanggiCommand[] = [];
+    for (let i = 0; i < state.board.length; i++) {
+      if (colorOf(state.board[i]) === color) {
+        for (const to of legalTargetsFrom(state, i)) out.push({ type: 'MOVE', from: i, to });
+      }
+    }
+    return out;
+  },
+
   evaluateResult(state: JanggiState): JanggiResult | null {
     if (state.phase !== 'COMPLETED') return null;
     return { winnerId: state.winnerId, winnerSeat: state.winnerSeat, reason: state.reason ?? '' };

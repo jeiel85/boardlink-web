@@ -65,6 +65,11 @@ export interface GameModule<TConfig, TState, TCommand, TEvent, TPlayerView, TRes
 
   evaluateResult(state: TState): TResult | null;
 
+  // Optional: enumerate every legal command for `actor` in `state`. Enables the
+  // AI / local-authority (same-device vs-computer) layer to search the move tree
+  // without duplicating each game's rules. Omit for games that do not need it.
+  enumerateCommands?(args: { state: TState; actor: GameActor }): readonly TCommand[];
+
   // Optional: return timestamp (ms) when the next server-side alarm should fire.
   // Return null if the game does not need a timer.
   getNextAlarmMs?(state: TState, nowMs: number): number | null;

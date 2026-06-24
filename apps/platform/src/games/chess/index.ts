@@ -655,6 +655,24 @@ export const chessGame: GameModule<
     };
   },
 
+  enumerateCommands({
+    state,
+    actor,
+  }: {
+    state: ChessState;
+    actor: GameActor;
+  }): readonly ChessCommand[] {
+    if (state.phase !== 'IN_PROGRESS') return [];
+    const color = seatColor(state, actor.seatIndex);
+    if (color !== state.turn) return [];
+    return allLegalMoves(state, color).map((m) => ({
+      type: 'MOVE',
+      from: m.from,
+      to: m.to,
+      ...(m.promotion ? { promotion: m.promotion } : {}),
+    }));
+  },
+
   evaluateResult(state: ChessState): ChessResult | null {
     if (state.phase !== 'COMPLETED' || state.result === null) return null;
     return { winnerId: state.winnerId, result: state.result, reason: state.resultReason ?? '' };

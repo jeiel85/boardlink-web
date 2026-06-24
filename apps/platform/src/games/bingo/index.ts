@@ -355,6 +355,31 @@ export const bingoGame: GameModule<
     };
   },
 
+  enumerateCommands({
+    state,
+    actor,
+  }: {
+    state: BingoState;
+    actor: GameActor;
+  }): readonly BingoCommand[] {
+    if (state.phase !== 'IN_PROGRESS') return [];
+    const card = state.cards[actor.userId];
+    if (!card) return [];
+    const out: BingoCommand[] = [];
+    if (actor.seatIndex === state.turnSeat && state.drawnCount < state.drawOrder.length) {
+      out.push({ type: 'DRAW' });
+    }
+    const called = calledSet(state);
+    const marked = new Set(state.marks[actor.userId] ?? []);
+    for (const n of card) {
+      if (called.has(n) && !marked.has(n)) out.push({ type: 'MARK', number: n });
+    }
+    if (countCompletedLines(card, marked, state.size) >= state.winningLines) {
+      out.push({ type: 'CLAIM_BINGO' });
+    }
+    return out;
+  },
+
   evaluateResult(state: BingoState): BingoResult | null {
     if (state.phase !== 'COMPLETED') return null;
     const winningSeat = state.winnerId ? state.seats.indexOf(state.winnerId) : -1;
