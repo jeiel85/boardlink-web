@@ -4,18 +4,20 @@ import { BingoLocalGame } from '../realtime/BingoLocalGame.js';
 import type { Difficulty } from '../../games/_shared/ai.js';
 import type { StrategyGameId } from './vsBoard.js';
 import { GameBoard, type BoardViewLike } from './GameBoard.js';
+import { BubbleSiegeArena } from './BubbleSiegeArena.js';
 
 // Same-device "play vs computer" UI. Strategy games (Gomoku/Chess/Janggi) use the
 // generic LocalGame + shared GameBoard renderer; Bingo uses its own driver/panel.
 // The (already-tested) drivers run the AI reply. No server / WebSocket involved.
 
-type GameId = StrategyGameId | 'bingo';
+type GameId = StrategyGameId | 'bingo' | 'bubble-siege';
 
 const GAMES: { id: GameId; name: string; sub: string }[] = [
   { id: 'gomoku', name: 'Gomoku', sub: '오목' },
   { id: 'chess', name: 'Chess', sub: '체스' },
   { id: 'janggi', name: 'Janggi', sub: '장기' },
   { id: 'bingo', name: 'Bingo', sub: '빙고' },
+  { id: 'bubble-siege', name: 'Bubble', sub: '버블시즈' },
 ];
 
 const DIFFICULTIES: { id: Difficulty; label: string }[] = [
@@ -44,6 +46,7 @@ interface JanggiView {
 type Active =
   | { kind: 'strategy'; game: LocalGame; gameId: StrategyGameId }
   | { kind: 'bingo'; game: BingoLocalGame }
+  | { kind: 'bubble' }
   | null;
 
 export function VsComputer() {
@@ -55,6 +58,8 @@ export function VsComputer() {
     const seed = Math.random().toString(36).slice(2);
     if (gameId === 'bingo') {
       setActive({ kind: 'bingo', game: new BingoLocalGame({ seed }) });
+    } else if (gameId === 'bubble-siege') {
+      setActive({ kind: 'bubble' });
     } else {
       setActive({ kind: 'strategy', game: new LocalGame({ gameId, difficulty, seed }), gameId });
     }
@@ -114,6 +119,10 @@ export function VsComputer() {
 
   if (active.kind === 'bingo') {
     return <BingoPanel game={active.game} onNew={start} onExit={reset} />;
+  }
+
+  if (active.kind === 'bubble') {
+    return <BubbleSiegeArena difficulty={difficulty} onExit={reset} />;
   }
 
   return (

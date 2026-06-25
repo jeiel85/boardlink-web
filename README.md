@@ -12,7 +12,8 @@ Production-ready design bundle for a free, accountless, browser-first multiplaye
 BoardLink is deployed and playable today:
 
 - **Play vs computer** (same-device, no network) — Gomoku, Chess, and Janggi with
-  Easy / Medium / Hard difficulty, plus Bingo against an auto-opponent.
+  Easy / Medium / Hard difficulty, Bingo against an auto-opponent, and the
+  real-time Bubble Siege arena against a reactive bot.
 - **Play online** — create a room, share the 6-character code, and play Gomoku,
   Chess, or Janggi in real time over WebSockets. Reconnecting mid-match restores
   the board.
@@ -44,7 +45,7 @@ server-authoritative game SDK (every match is replayable from its event log).
 | Chess (체스)    | ✅ (3 levels)        | ✅     | full rules: castling, en passant, promotion    |
 | Janggi (장기)   | ✅ (3 levels)        | ✅     | Korean chess — palace moves, cannons, checkmate |
 | Bingo           | ✅ (auto-opponent)   | —      | turn-based draw / mark / claim                 |
-| Bubble Siege    | —                    | —      | original asymmetric real-time game; server module + rules complete, client renderer pending |
+| Bubble Siege    | ✅ (3 levels)        | —      | original asymmetric real-time arena; online play is next |
 
 The computer opponent is a generic alpha-beta engine with per-game heuristics
 (difficulty = search depth); Bingo uses a greedy auto-player.
