@@ -106,8 +106,8 @@ async function waitFor(client, type, ms = 12000) {
 
 async function fullMatch() {
   log('\n— scenario 1: full online match —');
-  const alice = await authenticate('Alice');
-  const bob = await authenticate('Bob');
+  const alice = await authenticate('앨리스');
+  const bob = await authenticate('밥');
   const roomCode = await createRoom(alice.sessionToken, 'gomoku');
   log(`  room ${roomCode}`);
 
@@ -187,8 +187,8 @@ async function fullMatch() {
 
 async function reconnect() {
   log('\n— scenario 2: reconnect mid-match —');
-  const alice = await authenticate('Alice');
-  const bob = await authenticate('Bob');
+  const alice = await authenticate('앨리스');
+  const bob = await authenticate('밥');
   const roomCode = await createRoom(alice.sessionToken, 'gomoku');
   log(`  room ${roomCode}`);
 

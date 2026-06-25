@@ -151,6 +151,22 @@ describe('session authentication', () => {
     expect(user).toBeNull();
   });
 
+  it('handles non-Latin and colon-containing display names (header-safe token)', async () => {
+    const keyPair = await generateKeyPair();
+    const name = '한글:이름'; // Korean + a colon — both previously broke the token/header
+    const { status, sessionToken } = await authenticate(keyPair, name);
+    expect(status).toBe(200);
+    // token stays 4-part colon-delimited and is a valid HTTP header value (Latin-1)
+    expect(sessionToken!.split(':')).toHaveLength(4);
+    expect([...sessionToken!].every((c) => c.charCodeAt(0) <= 255)).toBe(true);
+    // building the Authorization header must not throw, and the name round-trips
+    const req = new Request('http://localhost', {
+      headers: { Authorization: `Bearer ${sessionToken}` },
+    });
+    const user = await authenticateSession(req, env);
+    expect(user?.displayName).toBe(name);
+  });
+
   it('rejects a tampered session token', async () => {
     const keyPair = await generateKeyPair();
     const { sessionToken } = await authenticate(keyPair, 'Tester');

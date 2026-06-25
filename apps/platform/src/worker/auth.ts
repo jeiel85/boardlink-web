@@ -37,6 +37,21 @@ async function verifyHmac(secret: string, data: string, signature: string): Prom
   return expectedSig === signature;
 }
 
+// The session token is colon-delimited (publicId:name:expiry:sig) and is also
+// carried in the `Authorization: Bearer` header, whose value must be Latin-1.
+// Display names can contain ':' or non-Latin-1 characters (e.g. 한글), so the
+// name segment is URI-encoded (ASCII, no ':') inside the token.
+function encodeName(name: string): string {
+  return encodeURIComponent(name);
+}
+function decodeName(encoded: string): string {
+  try {
+    return decodeURIComponent(encoded);
+  } catch {
+    return encoded;
+  }
+}
+
 // Log Redactor: scrub secrets before they reach the console. Defense-in-depth;
 // call sites must already avoid logging tokens, raw IPs, or complete codes.
 export function safeLog(message: string, ...args: unknown[]) {
@@ -209,7 +224,7 @@ export async function handleVerify(request: Request, env: Env): Promise<Response
 
     // Generate short-lived session token (valid for 15 minutes)
     const sessionExpiresAt = Date.now() + 900000;
-    const payload = `${publicId}:${displayName}:${sessionExpiresAt}`;
+    const payload = `${publicId}:${encodeName(displayName)}:${sessionExpiresAt}`;
     const tokenSig = await signHmac(secret, payload);
     const sessionToken = `${payload}:${tokenSig}`;
 
@@ -249,15 +264,15 @@ export async function verifySessionToken(
   const parts = token.split(':');
   if (parts.length !== 4) return null;
 
-  const [publicId, displayName, expiresAtStr, sig] = parts;
+  const [publicId, encName, expiresAtStr, sig] = parts;
   const expiresAt = parseInt(expiresAtStr, 10);
   if (isNaN(expiresAt) || Date.now() > expiresAt) return null;
 
-  const payload = `${publicId}:${displayName}:${expiresAt}`;
+  const payload = `${publicId}:${encName}:${expiresAt}`;
   const isValid = await verifyHmac(secret, payload, sig);
   if (!isValid) return null;
 
-  return { publicId, displayName };
+  return { publicId, displayName: decodeName(encName) };
 }
 
 export async function authenticateSession(
@@ -274,16 +289,16 @@ export async function authenticateSession(
   const parts = sessionToken.split(':');
   if (parts.length !== 4) return null;
 
-  const [publicId, displayName, expiresAtStr, sig] = parts;
+  const [publicId, encName, expiresAtStr, sig] = parts;
   const expiresAt = parseInt(expiresAtStr, 10);
 
   if (Date.now() > expiresAt) return null;
 
-  const payload = `${publicId}:${displayName}:${expiresAt}`;
+  const payload = `${publicId}:${encName}:${expiresAt}`;
   const isValid = await verifyHmac(secret, payload, sig);
   if (!isValid) return null;
 
-  return { publicId, displayName };
+  return { publicId, displayName: decodeName(encName) };
 }
 
 // Helper to generate a short, unique, readable friend code
