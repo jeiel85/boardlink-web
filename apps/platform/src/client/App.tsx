@@ -12,6 +12,7 @@ import { InAppGate } from './components/InAppGate.js';
 import { InstallBanner } from './components/InstallBanner.js';
 import { TabActiveGate } from './components/TabActiveGate.js';
 import { VsComputer } from './components/VsComputer.js';
+import { OnlineHome, OnlineRoom } from './components/OnlineRoom.js';
 
 interface BoardLinkE2E {
   navigate: (path: string) => void;
@@ -323,21 +324,12 @@ function AppContent() {
 
         {/* Dynamic Route Pages */}
         {roomId ? (
-          <section style={styles.card} id="room-page">
-            <h2 style={styles.sectionHeader}>🎮 Game Room: {roomId}</h2>
-            <p style={styles.description}>
-              You are connected to the live session. Update checks are deferred during active games.
-            </p>
-            <div style={styles.roomStatus}>
-              <span style={styles.label}>Match Lock:</span>
-              <span style={styles.badgeLock} id="match-lock-status">
-                ACTIVE
-              </span>
-            </div>
-            <button onClick={() => navigate('/')} style={styles.backButton} id="leave-room-button">
-              Exit Match
-            </button>
-          </section>
+          <OnlineRoom
+            roomCode={roomId.toUpperCase()}
+            sessionToken={sessionToken}
+            myId={identity?.publicId ?? null}
+            onExit={() => navigate('/')}
+          />
         ) : token ? (
           <section style={styles.card} id="join-page">
             <h2 style={styles.sectionHeader}>✉️ Invitation Received</h2>
@@ -361,6 +353,8 @@ function AppContent() {
           </section>
         ) : (
           <>
+            <OnlineHome sessionToken={sessionToken} navigate={navigate} />
+
             <VsComputer />
 
             <section style={styles.card} id="landing-page">

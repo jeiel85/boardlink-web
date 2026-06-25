@@ -34,6 +34,7 @@ export const RoomMemberSchema = z.object({
   status: MemberStatusSchema,
   isOwner: z.boolean(),
   seatIndex: z.number().int().nonnegative().optional(),
+  ready: z.boolean().optional(),
 });
 export type RoomMember = z.infer<typeof RoomMemberSchema>;
 

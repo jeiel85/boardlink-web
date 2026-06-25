@@ -2,11 +2,12 @@ import { useReducer, useState } from 'react';
 import { LocalGame } from '../realtime/LocalGame.js';
 import { BingoLocalGame } from '../realtime/BingoLocalGame.js';
 import type { Difficulty } from '../../games/_shared/ai.js';
-import { displayToBoard, type StrategyGameId } from './vsBoard.js';
+import type { StrategyGameId } from './vsBoard.js';
+import { GameBoard, type BoardViewLike } from './GameBoard.js';
 
 // Same-device "play vs computer" UI. Strategy games (Gomoku/Chess/Janggi) use the
-// generic LocalGame + board renderers; Bingo uses its own driver/panel. The
-// (already-tested) drivers run the AI reply. No server / WebSocket involved.
+// generic LocalGame + shared GameBoard renderer; Bingo uses its own driver/panel.
+// The (already-tested) drivers run the AI reply. No server / WebSocket involved.
 
 type GameId = StrategyGameId | 'bingo';
 
@@ -22,25 +23,6 @@ const DIFFICULTIES: { id: Difficulty; label: string }[] = [
   { id: 'medium', label: 'Medium' },
   { id: 'hard', label: 'Hard' },
 ];
-
-const CHESS_GLYPH: Record<string, string> = {
-  K: '♚',
-  Q: '♛',
-  R: '♜',
-  B: '♝',
-  N: '♞',
-  P: '♟',
-};
-
-const JANGGI_GLYPH: Record<string, string> = {
-  G: '宮',
-  S: '士',
-  H: '馬',
-  E: '象',
-  R: '車',
-  C: '包',
-  P: '卒',
-};
 
 interface GomokuView {
   board: number[];
@@ -215,9 +197,13 @@ function StrategyPanel({
       </div>
 
       <div style={styles.boardWrap}>
-        {gameId === 'gomoku' && <GomokuBoard game={game} onCell={onCellClick} />}
-        {gameId === 'chess' && <ChessBoard game={game} sel={sel} onCell={onCellClick} />}
-        {gameId === 'janggi' && <JanggiBoard game={game} sel={sel} onCell={onCellClick} />}
+        <GameBoard
+          gameId={gameId}
+          view={game.view() as BoardViewLike}
+          sel={sel}
+          targets={legalTargets(game, sel)}
+          onCell={onCellClick}
+        />
       </div>
 
       <div style={styles.controls}>
@@ -252,150 +238,6 @@ function legalTargets(game: LocalGame, sel: number | null): Set<number> {
   const out = new Set<number>();
   for (const c of cmds) if (c.from === sel && typeof c.to === 'number') out.add(c.to);
   return out;
-}
-
-function GomokuBoard({ game, onCell }: { game: LocalGame; onCell: (i: number) => void }) {
-  const v = game.view() as GomokuView;
-  const size = v.size;
-  const lastIdx = v.lastMove ? v.lastMove.y * size + v.lastMove.x : -1;
-  const cells = [];
-  for (let r = 0; r < size; r++) {
-    for (let c = 0; c < size; c++) {
-      const idx = displayToBoard('gomoku', r, c, v);
-      const val = v.board[idx];
-      cells.push(
-        <button
-          key={idx}
-          onClick={() => onCell(idx)}
-          style={{
-            ...styles.gridCell,
-            background: '#caa66a',
-            border: '1px solid #8a6d3b',
-            boxShadow: idx === lastIdx ? 'inset 0 0 0 2px #ef4444' : undefined,
-          }}
-        >
-          {val !== -1 && (
-            <span
-              style={{
-                ...styles.stone,
-                background:
-                  val === v.mySeat
-                    ? 'radial-gradient(circle at 35% 30%, #fff, #cbd5e1)'
-                    : 'radial-gradient(circle at 35% 30%, #555, #111)',
-              }}
-            />
-          )}
-        </button>,
-      );
-    }
-  }
-  return (
-    <div style={{ ...styles.grid, gridTemplateColumns: `repeat(${size}, 1fr)`, maxWidth: 360 }}>
-      {cells}
-    </div>
-  );
-}
-
-function ChessBoard({
-  game,
-  sel,
-  onCell,
-}: {
-  game: LocalGame;
-  sel: number | null;
-  onCell: (i: number) => void;
-}) {
-  const v = game.view() as ChessView;
-  const targets = legalTargets(game, sel);
-  const cells = [];
-  for (let dr = 0; dr < 8; dr++) {
-    for (let dc = 0; dc < 8; dc++) {
-      const idx = displayToBoard('chess', dr, dc, v);
-      const code = v.board[idx];
-      const dark = (dr + dc) % 2 === 1;
-      cells.push(
-        <button
-          key={idx}
-          onClick={() => onCell(idx)}
-          style={{
-            ...styles.gridCell,
-            background: dark ? '#6b7280' : '#cbd5e1',
-            boxShadow:
-              idx === sel
-                ? 'inset 0 0 0 3px #6366f1'
-                : targets.has(idx)
-                  ? 'inset 0 0 0 3px rgba(16,185,129,0.7)'
-                  : undefined,
-          }}
-        >
-          {code !== '' && (
-            <span
-              style={{
-                ...styles.piece,
-                color: code === code.toUpperCase() ? '#f8fafc' : '#0f172a',
-                textShadow: '0 1px 1px rgba(0,0,0,0.4)',
-              }}
-            >
-              {CHESS_GLYPH[code.toUpperCase()]}
-            </span>
-          )}
-        </button>,
-      );
-    }
-  }
-  return (
-    <div style={{ ...styles.grid, gridTemplateColumns: 'repeat(8, 1fr)', maxWidth: 360 }}>
-      {cells}
-    </div>
-  );
-}
-
-function JanggiBoard({
-  game,
-  sel,
-  onCell,
-}: {
-  game: LocalGame;
-  sel: number | null;
-  onCell: (i: number) => void;
-}) {
-  const v = game.view() as JanggiView;
-  const targets = legalTargets(game, sel);
-  const cells = [];
-  for (let dr = 0; dr < 10; dr++) {
-    for (let dc = 0; dc < 9; dc++) {
-      const idx = displayToBoard('janggi', dr, dc, v);
-      const code = v.board[idx];
-      cells.push(
-        <button
-          key={idx}
-          onClick={() => onCell(idx)}
-          style={{
-            ...styles.gridCell,
-            background: '#d8b46a',
-            border: '1px solid #9a7b40',
-            boxShadow:
-              idx === sel
-                ? 'inset 0 0 0 3px #6366f1'
-                : targets.has(idx)
-                  ? 'inset 0 0 0 3px rgba(16,185,129,0.8)'
-                  : undefined,
-          }}
-        >
-          {code !== '' && (
-            <span style={{ ...styles.janggiPiece, color: code[0] === '0' ? '#15803d' : '#b91c1c' }}>
-              {JANGGI_GLYPH[code[1]]}
-            </span>
-          )}
-        </button>,
-      );
-    }
-  }
-  return (
-    <div style={{ ...styles.grid, gridTemplateColumns: 'repeat(9, 1fr)', maxWidth: 360 }}>
-      {cells}
-    </div>
-  );
 }
 
 // ---------- bingo ----------

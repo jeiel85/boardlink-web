@@ -10,9 +10,11 @@ export interface RoomState {
   ownerId: string;
   members: RoomMember[];
   matchId: string | null;
+  gameId: string | null;
   serverSequence: number;
   gameEvents: unknown[];
   matchState: unknown;
+  matchResult: unknown;
   ping: number | null;
   error: string | null;
 }
@@ -24,9 +26,11 @@ const INITIAL_STATE: RoomState = {
   ownerId: '',
   members: [],
   matchId: null,
+  gameId: null,
   serverSequence: 0,
   gameEvents: [],
   matchState: null,
+  matchResult: null,
   ping: null,
   error: null,
 };
@@ -95,7 +99,9 @@ export function useRoom({ roomCode, sessionToken, enabled = true }: UseRoomOptio
             ...prev,
             phase: 'IN_MATCH',
             matchId: msg.payload.matchId,
+            gameId: msg.payload.gameId,
             matchState: msg.payload.initialState,
+            matchResult: null,
             serverSequence: msg.payload.serverSequence,
             gameEvents: [],
           };
@@ -107,14 +113,16 @@ export function useRoom({ roomCode, sessionToken, enabled = true }: UseRoomOptio
           };
 
         case 'STATE_SNAPSHOT':
+          // A fresh authoritative snapshot supersedes any buffered events.
           return {
             ...prev,
             matchState: msg.payload.state,
             serverSequence: msg.payload.serverSequence,
+            gameEvents: [],
           };
 
         case 'MATCH_COMPLETED':
-          return { ...prev, phase: 'COMPLETED' };
+          return { ...prev, phase: 'COMPLETED', matchResult: msg.payload.result };
 
         case 'MATCH_ABORTED':
           return { ...prev, phase: 'LOBBY', matchId: null, matchState: null, gameEvents: [] };
