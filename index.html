@@ -152,10 +152,11 @@
       <div class="wrap nav-inner">
         <div class="brand"><img src="assets/icon-192.png" alt="BoardLink logo" /> BoardLink</div>
         <nav class="nav-links">
-          <a class="muted" href="#join">How to join</a>
-          <a class="muted" href="#games">Games</a>
+          <a class="muted" href="#join" data-i18n="nav.join">How to join</a>
+          <a class="muted" href="#games" data-i18n="nav.games">Games</a>
           <a class="muted" href="https://github.com/jeiel85/boardlink-web">GitHub</a>
-          <a class="btn btn-primary" href="https://boardlink.jeiel85.workers.dev" target="_blank" rel="noopener">▶ Play</a>
+          <button id="langToggle" class="btn btn-ghost" type="button">한국어</button>
+          <a class="btn btn-primary" href="https://boardlink.jeiel85.workers.dev" target="_blank" rel="noopener" data-i18n="nav.play">▶ Play</a>
         </nav>
       </div>
     </header>
@@ -164,20 +165,20 @@
     <div class="hero">
       <div class="wrap hero-grid">
         <div>
-          <span class="pill">● No account · No app store · No tracking</span>
-          <h1>Open a link.<br /><span class="grad">Start playing.</span></h1>
-          <p class="lede">
+          <span class="pill" data-i18n="hero.pill">● No account · No app store · No tracking</span>
+          <h1 data-i18n-html="hero.h1">Open a link.<br /><span class="grad">Start playing.</span></h1>
+          <p class="lede" data-i18n="hero.lede">
             BoardLink lets people open a link on a phone, tablet, or computer and immediately play
             short multiplayer games together — with server-authoritative rooms and nothing to install.
           </p>
           <div class="cta-row">
-            <a class="btn btn-primary" href="https://boardlink.jeiel85.workers.dev" target="_blank" rel="noopener">▶ Play now</a>
-            <a class="btn btn-ghost" href="https://github.com/jeiel85/boardlink-web">View the project</a>
+            <a class="btn btn-primary" href="https://boardlink.jeiel85.workers.dev" target="_blank" rel="noopener" data-i18n="hero.playNow">▶ Play now</a>
+            <a class="btn btn-ghost" href="https://github.com/jeiel85/boardlink-web" data-i18n="hero.viewProject">View the project</a>
           </div>
           <div class="badges">
-            <span><i class="dot"></i> Browser-first PWA</span>
-            <span><i class="dot"></i> Real-time WebSocket rooms</span>
-            <span><i class="dot"></i> Free &amp; accountless</span>
+            <span><i class="dot"></i> <span data-i18n="hero.b1">Browser-first PWA</span></span>
+            <span><i class="dot"></i> <span data-i18n="hero.b2">Real-time WebSocket rooms</span></span>
+            <span><i class="dot"></i> <span data-i18n="hero.b3">Free &amp; accountless</span></span>
           </div>
         </div>
         <div class="device">
@@ -190,16 +191,16 @@
     <!-- JOIN -->
     <section id="join">
       <div class="wrap">
-        <p class="eyebrow">Five ways in</p>
-        <h2>Get into a game in seconds</h2>
-        <p class="section-sub">No friend requests, no logins. Pick whichever path fits the moment.</p>
+        <p class="eyebrow" data-i18n="join.eyebrow">Five ways in</p>
+        <h2 data-i18n="join.h2">Get into a game in seconds</h2>
+        <p class="section-sub" data-i18n="join.sub">No friend requests, no logins. Pick whichever path fits the moment.</p>
         <div class="grid cols-3">
-          <div class="card"><div class="ic">📡</div><h3>Play nearby</h3><p>Discover people who appear to share your Internet connection and challenge them instantly.</p></div>
-          <div class="card"><div class="ic">🔗</div><h3>Online friends</h3><p>Find an anonymous device profile by its friend code — no email or phone number needed.</p></div>
-          <div class="card"><div class="ic">📷</div><h3>Quick join</h3><p>Enter a room code, scan a QR code, or just open an invitation link someone sent you.</p></div>
-          <div class="card"><div class="ic">📱</div><h3>Same-device play</h3><p>Pass-and-play locally on one screen, with no network connection required at all.</p></div>
-          <div class="card"><div class="ic">⬇️</div><h3>Install as a PWA</h3><p>Add BoardLink to your home screen for an app-like launch — entirely optional.</p></div>
-          <div class="card"><div class="ic">⚡</div><h3>Just a link</h3><p>Everything starts from a URL. Share it anywhere and the other person is one tap from playing.</p></div>
+          <div class="card"><div class="ic">📡</div><h3 data-i18n="join.c1t">Play nearby</h3><p data-i18n="join.c1p">Discover people who appear to share your Internet connection and challenge them instantly.</p></div>
+          <div class="card"><div class="ic">🔗</div><h3 data-i18n="join.c2t">Online friends</h3><p data-i18n="join.c2p">Find an anonymous device profile by its friend code — no email or phone number needed.</p></div>
+          <div class="card"><div class="ic">📷</div><h3 data-i18n="join.c3t">Quick join</h3><p data-i18n="join.c3p">Enter a room code, scan a QR code, or just open an invitation link someone sent you.</p></div>
+          <div class="card"><div class="ic">📱</div><h3 data-i18n="join.c4t">Same-device play</h3><p data-i18n="join.c4p">Pass-and-play locally on one screen, with no network connection required at all.</p></div>
+          <div class="card"><div class="ic">⬇️</div><h3 data-i18n="join.c5t">Install as a PWA</h3><p data-i18n="join.c5p">Add BoardLink to your home screen for an app-like launch — entirely optional.</p></div>
+          <div class="card"><div class="ic">⚡</div><h3 data-i18n="join.c6t">Just a link</h3><p data-i18n="join.c6p">Everything starts from a URL. Share it anywhere and the other person is one tap from playing.</p></div>
         </div>
       </div>
     </section>
@@ -207,18 +208,18 @@
     <!-- GAMES -->
     <section id="games" style="background: var(--bg-soft);">
       <div class="wrap">
-        <p class="eyebrow">The game set</p>
-        <h2>Short games, made for sharing</h2>
-        <p class="section-sub">Play online with friends or against the computer — more on the roadmap.</p>
+        <p class="eyebrow" data-i18n="games.eyebrow">The game set</p>
+        <h2 data-i18n="games.h2">Short games, made for sharing</h2>
+        <p class="section-sub" data-i18n="games.sub">Play online with friends or against the computer — more on the roadmap.</p>
         <div class="games">
-          <div class="game"><span class="tag">PLAY NOW</span><h3>Gomoku</h3><p>Five-in-a-row strategy. Play online or against the computer at three difficulty levels.</p></div>
-          <div class="game"><span class="tag">PLAY NOW</span><h3>Chess</h3><p>Full chess — castling, en passant, promotion. Online or vs. computer with difficulty.</p></div>
-          <div class="game"><span class="tag">PLAY NOW</span><h3>Janggi</h3><p>Korean chess with palace moves and cannons. Online or vs. computer with difficulty.</p></div>
+          <div class="game"><span class="tag" data-i18n="tag.play">PLAY NOW</span><h3 data-i18n="g.gomoku">Gomoku</h3><p data-i18n="g.gomokuP">Five-in-a-row strategy. Play online or against the computer at three difficulty levels.</p></div>
+          <div class="game"><span class="tag" data-i18n="tag.play">PLAY NOW</span><h3 data-i18n="g.chess">Chess</h3><p data-i18n="g.chessP">Full chess — castling, en passant, promotion. Online or vs. computer with difficulty.</p></div>
+          <div class="game"><span class="tag" data-i18n="tag.play">PLAY NOW</span><h3 data-i18n="g.janggi">Janggi</h3><p data-i18n="g.janggiP">Korean chess with palace moves and cannons. Online or vs. computer with difficulty.</p></div>
         </div>
         <div class="games" style="margin-top:18px;">
-          <div class="game"><span class="tag">PLAY NOW</span><h3>Bingo</h3><p>The party favorite — quick to learn. Play against an automatic computer opponent.</p></div>
-          <div class="game"><span class="tag">PLAY NOW</span><h3>Bubble Siege</h3><p>An original asymmetric, real-time touch game. Play against the computer; online is next.</p></div>
-          <div class="game soon"><span class="tag">COMING SOON</span><h3>Team &amp; party modes</h3><p>Bigger rooms and group formats once the shared runtime is proven.</p></div>
+          <div class="game"><span class="tag" data-i18n="tag.play">PLAY NOW</span><h3 data-i18n="g.bingo">Bingo</h3><p data-i18n="g.bingoP">The party favorite — quick to learn. Play against an automatic computer opponent.</p></div>
+          <div class="game"><span class="tag" data-i18n="tag.play">PLAY NOW</span><h3 data-i18n="g.bubble">Bubble Siege</h3><p data-i18n="g.bubbleP">An original asymmetric, real-time touch game. Play against the computer; online is next.</p></div>
+          <div class="game soon"><span class="tag" data-i18n="tag.soon">COMING SOON</span><h3 data-i18n="g.team">Team &amp; party modes</h3><p data-i18n="g.teamP">Bigger rooms and group formats once the shared runtime is proven.</p></div>
         </div>
       </div>
     </section>
@@ -227,19 +228,19 @@
     <section id="privacy">
       <div class="wrap grid cols-2" style="align-items:center;">
         <div>
-          <p class="eyebrow">Private by default</p>
-          <h2>No account. No ads. No tracking.</h2>
-          <p class="section-sub">
+          <p class="eyebrow" data-i18n="privacy.eyebrow">Private by default</p>
+          <h2 data-i18n="privacy.h2">No account. No ads. No tracking.</h2>
+          <p class="section-sub" data-i18n="privacy.sub">
             BoardLink is built so you can play without handing over your identity. The initial
             release ships without any of the things that usually come bundled with "free."
           </p>
         </div>
         <ul class="privacy-list">
-          <li><span class="check">✓</span> No account, email address, or phone number required.</li>
-          <li><span class="check">✓</span> No advertising SDK, analytics SDK, or third-party tracking scripts.</li>
-          <li><span class="check">✓</span> No social login and no public free-text chat.</li>
-          <li><span class="check">✓</span> Raw visitor IP addresses are never persisted by the app.</li>
-          <li><span class="check">✓</span> Server-authoritative state — no client is trusted for rules or scores.</li>
+          <li><span class="check">✓</span> <span data-i18n="privacy.l1">No account, email address, or phone number required.</span></li>
+          <li><span class="check">✓</span> <span data-i18n="privacy.l2">No advertising SDK, analytics SDK, or third-party tracking scripts.</span></li>
+          <li><span class="check">✓</span> <span data-i18n="privacy.l3">No social login and no public free-text chat.</span></li>
+          <li><span class="check">✓</span> <span data-i18n="privacy.l4">Raw visitor IP addresses are never persisted by the app.</span></li>
+          <li><span class="check">✓</span> <span data-i18n="privacy.l5">Server-authoritative state — no client is trusted for rules or scores.</span></li>
         </ul>
       </div>
     </section>
@@ -247,8 +248,8 @@
     <!-- TECH -->
     <section style="background: var(--bg-soft); padding-top:48px; padding-bottom:48px;">
       <div class="wrap">
-        <p class="eyebrow">Under the hood</p>
-        <h2 style="margin-bottom:20px;">Built on a modern edge stack</h2>
+        <p class="eyebrow" data-i18n="tech.eyebrow">Under the hood</p>
+        <h2 style="margin-bottom:20px;" data-i18n="tech.h2">Built on a modern edge stack</h2>
         <div class="stack">
           <span class="chip">React 19</span>
           <span class="chip">TypeScript</span>
@@ -273,10 +274,183 @@
           <a href="https://github.com/jeiel85/boardlink-web/blob/main/README.md">README</a>
         </div>
       </div>
-      <div class="wrap note">
+      <div class="wrap note" data-i18n="footer.note">
         “BoardLink” is a provisional working name; branding may change before public release.
         Nearby discovery is approximate and is not exact physical proximity.
       </div>
     </footer>
+
+    <script>
+      (function () {
+        var T = {
+          en: {
+            'nav.join': 'How to join',
+            'nav.games': 'Games',
+            'nav.play': '▶ Play',
+            'hero.pill': '● No account · No app store · No tracking',
+            'hero.h1': 'Open a link.<br /><span class="grad">Start playing.</span>',
+            'hero.lede':
+              'BoardLink lets people open a link on a phone, tablet, or computer and immediately play short multiplayer games together — with server-authoritative rooms and nothing to install.',
+            'hero.playNow': '▶ Play now',
+            'hero.viewProject': 'View the project',
+            'hero.b1': 'Browser-first PWA',
+            'hero.b2': 'Real-time WebSocket rooms',
+            'hero.b3': 'Free & accountless',
+            'join.eyebrow': 'Five ways in',
+            'join.h2': 'Get into a game in seconds',
+            'join.sub': 'No friend requests, no logins. Pick whichever path fits the moment.',
+            'join.c1t': 'Play nearby',
+            'join.c1p':
+              'Discover people who appear to share your Internet connection and challenge them instantly.',
+            'join.c2t': 'Online friends',
+            'join.c2p':
+              'Find an anonymous device profile by its friend code — no email or phone number needed.',
+            'join.c3t': 'Quick join',
+            'join.c3p':
+              'Enter a room code, scan a QR code, or just open an invitation link someone sent you.',
+            'join.c4t': 'Same-device play',
+            'join.c4p':
+              'Pass-and-play locally on one screen, with no network connection required at all.',
+            'join.c5t': 'Install as a PWA',
+            'join.c5p': 'Add BoardLink to your home screen for an app-like launch — entirely optional.',
+            'join.c6t': 'Just a link',
+            'join.c6p':
+              'Everything starts from a URL. Share it anywhere and the other person is one tap from playing.',
+            'games.eyebrow': 'The game set',
+            'games.h2': 'Short games, made for sharing',
+            'games.sub': 'Play online with friends or against the computer — more on the roadmap.',
+            'tag.play': 'PLAY NOW',
+            'tag.soon': 'COMING SOON',
+            'g.gomoku': 'Gomoku',
+            'g.gomokuP':
+              'Five-in-a-row strategy. Play online or against the computer at three difficulty levels.',
+            'g.chess': 'Chess',
+            'g.chessP':
+              'Full chess — castling, en passant, promotion. Online or vs. computer with difficulty.',
+            'g.janggi': 'Janggi',
+            'g.janggiP':
+              'Korean chess with palace moves and cannons. Online or vs. computer with difficulty.',
+            'g.bingo': 'Bingo',
+            'g.bingoP':
+              'The party favorite — quick to learn. Play against an automatic computer opponent.',
+            'g.bubble': 'Bubble Siege',
+            'g.bubbleP':
+              'An original asymmetric, real-time touch game. Play against the computer; online is next.',
+            'g.team': 'Team & party modes',
+            'g.teamP': 'Bigger rooms and group formats once the shared runtime is proven.',
+            'privacy.eyebrow': 'Private by default',
+            'privacy.h2': 'No account. No ads. No tracking.',
+            'privacy.sub':
+              'BoardLink is built so you can play without handing over your identity. The initial release ships without any of the things that usually come bundled with "free."',
+            'privacy.l1': 'No account, email address, or phone number required.',
+            'privacy.l2': 'No advertising SDK, analytics SDK, or third-party tracking scripts.',
+            'privacy.l3': 'No social login and no public free-text chat.',
+            'privacy.l4': 'Raw visitor IP addresses are never persisted by the app.',
+            'privacy.l5': 'Server-authoritative state — no client is trusted for rules or scores.',
+            'tech.eyebrow': 'Under the hood',
+            'tech.h2': 'Built on a modern edge stack',
+            'footer.note':
+              '“BoardLink” is a provisional working name; branding may change before public release. Nearby discovery is approximate and is not exact physical proximity.',
+          },
+          ko: {
+            'nav.join': '참여 방법',
+            'nav.games': '게임',
+            'nav.play': '▶ 플레이',
+            'hero.pill': '● 계정 없음 · 앱스토어 없음 · 추적 없음',
+            'hero.h1': '링크를 열고<br /><span class="grad">바로 플레이.</span>',
+            'hero.lede':
+              'BoardLink는 휴대폰·태블릿·컴퓨터에서 링크를 열기만 하면 곧바로 짧은 멀티플레이어 게임을 함께 즐길 수 있게 합니다 — 서버 권위 룸, 설치 불필요.',
+            'hero.playNow': '▶ 지금 플레이',
+            'hero.viewProject': '프로젝트 보기',
+            'hero.b1': '브라우저 우선 PWA',
+            'hero.b2': '실시간 WebSocket 룸',
+            'hero.b3': '무료 · 계정 불필요',
+            'join.eyebrow': '다섯 가지 진입 방법',
+            'join.h2': '몇 초 만에 게임 시작',
+            'join.sub': '친구 추가도, 로그인도 없이. 상황에 맞는 방법을 고르세요.',
+            'join.c1t': '주변에서 찾기',
+            'join.c1p': '같은 인터넷 연결을 공유하는 것으로 보이는 사람을 발견하고 바로 도전하세요.',
+            'join.c2t': '온라인 친구',
+            'join.c2p': '친구 코드로 익명 기기 프로필을 찾습니다 — 이메일·전화번호 불필요.',
+            'join.c3t': '빠른 입장',
+            'join.c3p': '방 코드 입력, QR 스캔, 또는 받은 초대 링크 열기.',
+            'join.c4t': '같은 기기 플레이',
+            'join.c4p': '네트워크 연결 없이 한 화면에서 번갈아 플레이.',
+            'join.c5t': 'PWA로 설치',
+            'join.c5p': '홈 화면에 BoardLink를 추가해 앱처럼 실행 — 완전히 선택 사항.',
+            'join.c6t': '링크 하나면 끝',
+            'join.c6p': '모든 것은 URL에서 시작합니다. 어디든 공유하면 상대는 한 번의 탭으로 플레이.',
+            'games.eyebrow': '게임 라인업',
+            'games.h2': '나누기 좋은 짧은 게임들',
+            'games.sub': '친구와 온라인으로, 또는 컴퓨터와 — 로드맵에 더 추가됩니다.',
+            'tag.play': '지금 플레이',
+            'tag.soon': '출시 예정',
+            'g.gomoku': '오목',
+            'g.gomokuP': '5목 전략. 온라인 또는 컴퓨터와 3단계 난이도로 플레이.',
+            'g.chess': '체스',
+            'g.chessP': '전 규칙 체스 — 캐슬링·앙파상·프로모션. 온라인 또는 난이도별 컴퓨터 대결.',
+            'g.janggi': '장기',
+            'g.janggiP': '궁성 이동과 포가 있는 한국 장기. 온라인 또는 난이도별 컴퓨터 대결.',
+            'g.bingo': '빙고',
+            'g.bingoP': '배우기 쉬운 파티 게임. 자동 컴퓨터 상대와 플레이.',
+            'g.bubble': '버블시즈',
+            'g.bubbleP': '원작 비대칭 실시간 터치 게임. 컴퓨터와 플레이 가능; 온라인은 다음 단계.',
+            'g.team': '팀 · 파티 모드',
+            'g.teamP': '공유 런타임이 검증되면 더 큰 방과 그룹 형식을 추가합니다.',
+            'privacy.eyebrow': '기본이 프라이버시',
+            'privacy.h2': '계정 없음. 광고 없음. 추적 없음.',
+            'privacy.sub':
+              'BoardLink는 신원을 넘기지 않고도 플레이할 수 있도록 만들어졌습니다. 초기 릴리스에는 흔히 "무료"에 따라붙는 것들이 하나도 없습니다.',
+            'privacy.l1': '계정·이메일·전화번호가 필요 없습니다.',
+            'privacy.l2': '광고 SDK·분석 SDK·서드파티 추적 스크립트가 없습니다.',
+            'privacy.l3': '소셜 로그인과 공개 자유 채팅이 없습니다.',
+            'privacy.l4': '방문자 원본 IP는 앱에 의해 저장되지 않습니다.',
+            'privacy.l5': '서버 권위 상태 — 규칙·점수에 대해 어떤 클라이언트도 신뢰하지 않습니다.',
+            'tech.eyebrow': '기술 구성',
+            'tech.h2': '모던 엣지 스택 위에 구축',
+            'footer.note':
+              '"BoardLink"는 잠정 가칭이며 공개 출시 전에 브랜딩이 바뀔 수 있습니다. 주변 발견은 근사치이며 정확한 물리적 근접이 아닙니다.',
+          },
+        };
+
+        function detect() {
+          try {
+            var s = localStorage.getItem('boardlink-lang');
+            if (s === 'ko' || s === 'en') return s;
+          } catch (e) {}
+          return (navigator.language || '').toLowerCase().indexOf('ko') === 0 ? 'ko' : 'en';
+        }
+
+        var lang = detect();
+
+        function apply() {
+          var dict = T[lang] || T.en;
+          document.documentElement.lang = lang;
+          document.querySelectorAll('[data-i18n]').forEach(function (el) {
+            var k = el.getAttribute('data-i18n');
+            if (dict[k] != null) el.textContent = dict[k];
+          });
+          document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+            var k = el.getAttribute('data-i18n-html');
+            if (dict[k] != null) el.innerHTML = dict[k];
+          });
+          var btn = document.getElementById('langToggle');
+          if (btn) btn.textContent = lang === 'ko' ? 'EN' : '한국어';
+        }
+
+        var toggle = document.getElementById('langToggle');
+        if (toggle) {
+          toggle.addEventListener('click', function () {
+            lang = lang === 'ko' ? 'en' : 'ko';
+            try {
+              localStorage.setItem('boardlink-lang', lang);
+            } catch (e) {}
+            apply();
+          });
+        }
+
+        apply();
+      })();
+    </script>
   </body>
 </html>
