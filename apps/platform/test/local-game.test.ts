@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { LocalGame } from '../src/client/realtime/LocalGame.js';
+import { BingoLocalGame } from '../src/client/realtime/BingoLocalGame.js';
 
 const gidx = (x: number, y: number, size: number): number => y * size + x;
 
@@ -60,5 +61,42 @@ describe('LocalGame (vs computer)', () => {
 
   it('throws for a game without a computer opponent', () => {
     expect(() => new LocalGame({ gameId: 'bubble-siege' })).toThrow();
+  });
+});
+
+describe('BingoLocalGame (vs computer)', () => {
+  it('plays a full game to a decisive outcome with the computer', () => {
+    const g = new BingoLocalGame({ seed: 'b1', config: { size: 3, winningLines: 1, poolSize: 9 } });
+    let guard = 0;
+    while (!g.isOver() && guard++ < 500) {
+      if (g.canClaim()) {
+        g.claim();
+        continue;
+      }
+      const v = g.view() as { myCard: number[]; myMarks: number[]; called: number[] };
+      const called = new Set(v.called);
+      const mk = new Set(v.myMarks);
+      const toMark = v.myCard.find((n) => called.has(n) && !mk.has(n));
+      if (toMark !== undefined) {
+        g.mark(toMark);
+        continue;
+      }
+      if (g.canDraw()) {
+        g.draw();
+        continue;
+      }
+      break;
+    }
+    expect(g.isOver()).toBe(true);
+    expect(['win', 'lose', 'draw']).toContain(g.outcome());
+  });
+
+  it('rejects marking a number that has not been called', () => {
+    const g = new BingoLocalGame({ seed: 'b2', config: { size: 3, winningLines: 1, poolSize: 9 } });
+    const v = g.view() as { myCard: number[]; called: number[] };
+    const uncalled = v.myCard.find((n) => !v.called.includes(n));
+    if (uncalled !== undefined) {
+      expect(g.mark(uncalled).ok).toBe(false);
+    }
   });
 });
