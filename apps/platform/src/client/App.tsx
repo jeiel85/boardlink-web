@@ -60,6 +60,7 @@ function AppContent() {
   const [currentPath, setCurrentPath] = useState(
     typeof window !== 'undefined' ? window.location.pathname : '/',
   );
+  const [showSettings, setShowSettings] = useState(false);
 
   // Friend code lookup states
   const [lookupQuery, setLookupQuery] = useState('');
@@ -191,6 +192,17 @@ function AppContent() {
 
       {/* Main UI layout */}
       <main style={styles.main}>
+        {!roomId && !token && (
+          <div style={styles.topbar}>
+            <button
+              onClick={() => setShowSettings((s) => !s)}
+              style={styles.settingsToggle}
+              id="settings-toggle"
+            >
+              {showSettings ? '✕ Close' : '⚙️ Settings'}
+            </button>
+          </div>
+        )}
         <header style={styles.header}>
           <h1 style={styles.title} onClick={() => navigate('/')}>
             BoardLink
@@ -198,129 +210,140 @@ function AppContent() {
           <p style={styles.subtitle}>Casual Real-Time Multiplayer Board Games</p>
         </header>
 
-        {/* User Identity Profile Card */}
-        <section style={styles.card} id="identity-card">
-          <h2 style={styles.sectionHeader}>👤 Device Profile</h2>
-          {identity ? (
-            <div style={styles.profileDetails}>
-              <div style={styles.profileRow}>
-                <span style={styles.label}>Display Name:</span>
-                <span style={styles.profileName} id="profile-display-name">
-                  {identity.displayName}
-                </span>
-              </div>
-              <div style={styles.profileRow}>
-                <span style={styles.label}>Public ID:</span>
-                <span style={styles.profileId} id="profile-public-id">
-                  {identity.publicId}
-                </span>
-              </div>
-              <div style={styles.profileRow}>
-                <span style={styles.label}>Storage Status:</span>
-                <span style={styles.value} id="persistent-storage-status">
-                  {isPersistentStorageGranted ? 'PERSISTENT' : 'TEMPORARY'}
-                </span>
-              </div>
-
-              <div style={styles.divider} />
-
-              <div style={styles.friendCodeSection}>
-                <span style={styles.label}>Friend Code:</span>
-                {friendCode ? (
-                  <div style={styles.codeRow}>
-                    <span style={styles.codeValue} id="friend-code-value">
-                      {friendCode}
+        {showSettings && !roomId && !token && (
+          <>
+            <h2 style={styles.settingsTitle}>⚙️ Settings</h2>
+            {/* User Identity Profile Card */}
+            <section style={styles.card} id="identity-card">
+              <h2 style={styles.sectionHeader}>👤 Device Profile</h2>
+              {identity ? (
+                <div style={styles.profileDetails}>
+                  <div style={styles.profileRow}>
+                    <span style={styles.label}>Display Name:</span>
+                    <span style={styles.profileName} id="profile-display-name">
+                      {identity.displayName}
                     </span>
-                    <div style={styles.codeActions}>
-                      <button
-                        onClick={rotateFriendCode}
-                        style={styles.actionButton}
-                        id="rotate-friend-code-btn"
-                        disabled={!sessionToken}
-                      >
-                        Rotate
-                      </button>
-                      <button
-                        onClick={revokeFriendCode}
-                        style={styles.revokeButton}
-                        id="revoke-friend-code-btn"
-                        disabled={!sessionToken}
-                      >
-                        Revoke
-                      </button>
-                    </div>
                   </div>
-                ) : (
+                  <div style={styles.profileRow}>
+                    <span style={styles.label}>Public ID:</span>
+                    <span style={styles.profileId} id="profile-public-id">
+                      {identity.publicId}
+                    </span>
+                  </div>
+                  <div style={styles.profileRow}>
+                    <span style={styles.label}>Storage Status:</span>
+                    <span style={styles.value} id="persistent-storage-status">
+                      {isPersistentStorageGranted ? 'PERSISTENT' : 'TEMPORARY'}
+                    </span>
+                  </div>
+
+                  <div style={styles.divider} />
+
+                  <div style={styles.friendCodeSection}>
+                    <span style={styles.label}>Friend Code:</span>
+                    {friendCode ? (
+                      <div style={styles.codeRow}>
+                        <span style={styles.codeValue} id="friend-code-value">
+                          {friendCode}
+                        </span>
+                        <div style={styles.codeActions}>
+                          <button
+                            onClick={rotateFriendCode}
+                            style={styles.actionButton}
+                            id="rotate-friend-code-btn"
+                            disabled={!sessionToken}
+                          >
+                            Rotate
+                          </button>
+                          <button
+                            onClick={revokeFriendCode}
+                            style={styles.revokeButton}
+                            id="revoke-friend-code-btn"
+                            disabled={!sessionToken}
+                          >
+                            Revoke
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={issueFriendCode}
+                        style={styles.issueButton}
+                        id="issue-friend-code-btn"
+                        disabled={!sessionToken}
+                      >
+                        Issue Friend Code
+                      </button>
+                    )}
+                  </div>
+
                   <button
-                    onClick={issueFriendCode}
-                    style={styles.issueButton}
-                    id="issue-friend-code-btn"
-                    disabled={!sessionToken}
+                    onClick={resetIdentity}
+                    style={styles.resetButton}
+                    id="reset-identity-btn"
                   >
-                    Issue Friend Code
+                    Reset Profile Identity
                   </button>
-                )}
+                </div>
+              ) : (
+                <p style={styles.description}>Generating accountless cryptographic keys...</p>
+              )}
+            </section>
+
+            {/* Friend Code Lookup Panel */}
+            <section style={styles.card} id="lookup-card">
+              <h2 style={styles.sectionHeader}>🔍 Search Friend Code</h2>
+              <p style={styles.description}>
+                Enter a friend's code to lookup their public profile ID.
+              </p>
+              <div style={styles.lookupInputRow}>
+                <input
+                  type="text"
+                  placeholder="e.g. ABCD-1234"
+                  value={lookupQuery}
+                  onChange={(e) => setLookupQuery(e.target.value.toUpperCase())}
+                  style={styles.input}
+                  id="lookup-input"
+                />
+                <button
+                  onClick={handleLookup}
+                  disabled={isSearching}
+                  style={styles.primaryButton}
+                  id="lookup-btn"
+                >
+                  {isSearching ? 'Searching...' : 'Search'}
+                </button>
               </div>
 
-              <button onClick={resetIdentity} style={styles.resetButton} id="reset-identity-btn">
-                Reset Profile Identity
-              </button>
-            </div>
-          ) : (
-            <p style={styles.description}>Generating accountless cryptographic keys...</p>
-          )}
-        </section>
+              {/* Lookup Results */}
+              {lookupResult && (
+                <div style={styles.successResult} id="lookup-result-success">
+                  <span style={styles.resultLabel}>User Found:</span>
+                  <strong style={styles.resultName}>{lookupResult.displayName}</strong>
+                  <code style={styles.resultId}>{lookupResult.publicId}</code>
+                </div>
+              )}
 
-        {/* Friend Code Lookup Panel */}
-        <section style={styles.card} id="lookup-card">
-          <h2 style={styles.sectionHeader}>🔍 Search Friend Code</h2>
-          <p style={styles.description}>Enter a friend's code to lookup their public profile ID.</p>
-          <div style={styles.lookupInputRow}>
-            <input
-              type="text"
-              placeholder="e.g. ABCD-1234"
-              value={lookupQuery}
-              onChange={(e) => setLookupQuery(e.target.value.toUpperCase())}
-              style={styles.input}
-              id="lookup-input"
-            />
-            <button
-              onClick={handleLookup}
-              disabled={isSearching}
-              style={styles.primaryButton}
-              id="lookup-btn"
-            >
-              {isSearching ? 'Searching...' : 'Search'}
-            </button>
-          </div>
+              {lookupError === 'notfound' && (
+                <div style={styles.errorResult} id="lookup-result-notfound">
+                  ❌ Friend code not found or expired.
+                </div>
+              )}
 
-          {/* Lookup Results */}
-          {lookupResult && (
-            <div style={styles.successResult} id="lookup-result-success">
-              <span style={styles.resultLabel}>User Found:</span>
-              <strong style={styles.resultName}>{lookupResult.displayName}</strong>
-              <code style={styles.resultId}>{lookupResult.publicId}</code>
-            </div>
-          )}
+              {lookupError === 'ratelimit' && (
+                <div style={styles.errorResult} id="lookup-result-ratelimit">
+                  ⚠️ Too many lookups. Please wait a minute.
+                </div>
+              )}
 
-          {lookupError === 'notfound' && (
-            <div style={styles.errorResult} id="lookup-result-notfound">
-              ❌ Friend code not found or expired.
-            </div>
-          )}
-
-          {lookupError === 'ratelimit' && (
-            <div style={styles.errorResult} id="lookup-result-ratelimit">
-              ⚠️ Too many lookups. Please wait a minute.
-            </div>
-          )}
-
-          {lookupError === 'error' && (
-            <div style={styles.errorResult} id="lookup-result-error">
-              ❌ Search failed: {lookupErrorMsg}
-            </div>
-          )}
-        </section>
+              {lookupError === 'error' && (
+                <div style={styles.errorResult} id="lookup-result-error">
+                  ❌ Search failed: {lookupErrorMsg}
+                </div>
+              )}
+            </section>
+          </>
+        )}
 
         {/* Dynamic Route Pages */}
         {roomId ? (
@@ -351,153 +374,137 @@ function AppContent() {
               Enter Game Room
             </button>
           </section>
-        ) : (
+        ) : showSettings ? null : (
           <>
             <OnlineHome sessionToken={sessionToken} navigate={navigate} />
-
             <VsComputer />
+          </>
+        )}
 
-            <section style={styles.card} id="landing-page">
-              <h2 style={styles.sectionHeader}>Welcome to BoardLink</h2>
-              <p style={styles.description}>
-                Choose an option below to simulate navigating to different parts of the application.
-              </p>
+        {showSettings && !roomId && !token && (
+          <>
+            {/* System Dashboard */}
+            <section style={styles.card}>
+              <h2 style={styles.sectionHeader}>System Status</h2>
+              <div style={styles.statusGrid}>
+                <div style={styles.statusItem}>
+                  <span style={styles.label}>Protocol Version</span>
+                  <span style={styles.value} id="protocol-version">
+                    {PROTOCOL_VERSION}
+                  </span>
+                </div>
+                <div style={styles.statusItem}>
+                  <span style={styles.label}>Build ID</span>
+                  <span style={styles.value} id="build-id">
+                    {BUILD_ID}
+                  </span>
+                </div>
+                <div style={styles.statusItem}>
+                  <span style={styles.label}>Leader Status</span>
+                  <span
+                    style={isLeader ? styles.badgeLeader : styles.badgeFollower}
+                    id="leader-status"
+                  >
+                    {isLeader ? 'LEADER' : 'INACTIVE'}
+                  </span>
+                </div>
+                <div style={styles.statusItem}>
+                  <span style={styles.label}>Service Status</span>
+                  <span style={styles.badgeLeader} id="service-status">
+                    ONLINE
+                  </span>
+                </div>
+              </div>
+            </section>
 
-              <div style={styles.navGrid}>
-                <button
-                  onClick={() => navigate('/room/room123')}
-                  style={styles.navButton}
-                  id="nav-room-123"
-                >
-                  Go to Room: room123
-                </button>
-                <button
-                  onClick={() => navigate('/join/token456')}
-                  style={styles.navButton}
-                  id="nav-join-456"
-                >
-                  Accept Invite: token456
-                </button>
+            {/* E2E Testing and Mock Controls Panel */}
+            <section style={styles.testingPanel} id="testing-controls-panel">
+              <h3 style={styles.panelTitle}>⚙️ E2E Mock Settings</h3>
+              <div style={styles.panelGrid}>
+                <div style={styles.panelRow}>
+                  <span style={styles.panelLabel}>Mock Context:</span>
+                  <div style={styles.panelButtonGroup}>
+                    <button
+                      onClick={() => forceMockContext('supported-browser')}
+                      style={
+                        context === 'supported-browser'
+                          ? styles.panelButtonActive
+                          : styles.panelButton
+                      }
+                      id="mock-supported-btn"
+                    >
+                      Browser
+                    </button>
+                    <button
+                      onClick={() => forceMockContext('suspected-in-app-browser')}
+                      style={
+                        context === 'suspected-in-app-browser'
+                          ? styles.panelButtonActive
+                          : styles.panelButton
+                      }
+                      id="mock-inapp-btn"
+                    >
+                      In-App
+                    </button>
+                    <button
+                      onClick={() => forceMockContext('installed-pwa')}
+                      style={
+                        context === 'installed-pwa' ? styles.panelButtonActive : styles.panelButton
+                      }
+                      id="mock-standalone-btn"
+                    >
+                      PWA
+                    </button>
+                  </div>
+                </div>
+
+                <div style={styles.panelRow}>
+                  <span style={styles.panelLabel}>Mock Storage Block:</span>
+                  <button
+                    onClick={() => forceMockIdentityBlock(!mockBlocked)}
+                    style={mockBlocked ? styles.panelButtonActive : styles.panelButton}
+                    id="toggle-mock-indexeddb-btn"
+                  >
+                    {mockBlocked ? 'BLOCKED' : 'ALLOW'}
+                  </button>
+                </div>
+
+                <div style={styles.panelRow}>
+                  <span style={styles.panelLabel}>SW Update:</span>
+                  <div style={styles.panelStatusGroup}>
+                    <span style={styles.panelValue} id="sw-status-label">
+                      {isUpdateAvailable
+                        ? updateDeferred
+                          ? 'Deferred (In Match)'
+                          : 'Available'
+                        : 'Up to Date'}
+                    </span>
+                    <button
+                      onClick={simulateMockUpdate}
+                      style={styles.panelActionBtn}
+                      id="mock-sw-update-btn"
+                    >
+                      Simulate Update
+                    </button>
+                  </div>
+                </div>
+
+                {isUpdateAvailable && (
+                  <div style={styles.panelRow}>
+                    <span style={styles.panelLabel}>Action:</span>
+                    <button
+                      onClick={triggerUpdate}
+                      style={styles.updateActionBtn}
+                      id="trigger-sw-update-btn"
+                    >
+                      Reload & Apply Update
+                    </button>
+                  </div>
+                )}
               </div>
             </section>
           </>
         )}
-
-        {/* System Dashboard */}
-        <section style={styles.card}>
-          <h2 style={styles.sectionHeader}>System Status</h2>
-          <div style={styles.statusGrid}>
-            <div style={styles.statusItem}>
-              <span style={styles.label}>Protocol Version</span>
-              <span style={styles.value} id="protocol-version">
-                {PROTOCOL_VERSION}
-              </span>
-            </div>
-            <div style={styles.statusItem}>
-              <span style={styles.label}>Build ID</span>
-              <span style={styles.value} id="build-id">
-                {BUILD_ID}
-              </span>
-            </div>
-            <div style={styles.statusItem}>
-              <span style={styles.label}>Leader Status</span>
-              <span style={isLeader ? styles.badgeLeader : styles.badgeFollower} id="leader-status">
-                {isLeader ? 'LEADER' : 'INACTIVE'}
-              </span>
-            </div>
-            <div style={styles.statusItem}>
-              <span style={styles.label}>Service Status</span>
-              <span style={styles.badgeLeader} id="service-status">
-                ONLINE
-              </span>
-            </div>
-          </div>
-        </section>
-
-        {/* E2E Testing and Mock Controls Panel */}
-        <section style={styles.testingPanel} id="testing-controls-panel">
-          <h3 style={styles.panelTitle}>⚙️ E2E Mock Settings</h3>
-          <div style={styles.panelGrid}>
-            <div style={styles.panelRow}>
-              <span style={styles.panelLabel}>Mock Context:</span>
-              <div style={styles.panelButtonGroup}>
-                <button
-                  onClick={() => forceMockContext('supported-browser')}
-                  style={
-                    context === 'supported-browser' ? styles.panelButtonActive : styles.panelButton
-                  }
-                  id="mock-supported-btn"
-                >
-                  Browser
-                </button>
-                <button
-                  onClick={() => forceMockContext('suspected-in-app-browser')}
-                  style={
-                    context === 'suspected-in-app-browser'
-                      ? styles.panelButtonActive
-                      : styles.panelButton
-                  }
-                  id="mock-inapp-btn"
-                >
-                  In-App
-                </button>
-                <button
-                  onClick={() => forceMockContext('installed-pwa')}
-                  style={
-                    context === 'installed-pwa' ? styles.panelButtonActive : styles.panelButton
-                  }
-                  id="mock-standalone-btn"
-                >
-                  PWA
-                </button>
-              </div>
-            </div>
-
-            <div style={styles.panelRow}>
-              <span style={styles.panelLabel}>Mock Storage Block:</span>
-              <button
-                onClick={() => forceMockIdentityBlock(!mockBlocked)}
-                style={mockBlocked ? styles.panelButtonActive : styles.panelButton}
-                id="toggle-mock-indexeddb-btn"
-              >
-                {mockBlocked ? 'BLOCKED' : 'ALLOW'}
-              </button>
-            </div>
-
-            <div style={styles.panelRow}>
-              <span style={styles.panelLabel}>SW Update:</span>
-              <div style={styles.panelStatusGroup}>
-                <span style={styles.panelValue} id="sw-status-label">
-                  {isUpdateAvailable
-                    ? updateDeferred
-                      ? 'Deferred (In Match)'
-                      : 'Available'
-                    : 'Up to Date'}
-                </span>
-                <button
-                  onClick={simulateMockUpdate}
-                  style={styles.panelActionBtn}
-                  id="mock-sw-update-btn"
-                >
-                  Simulate Update
-                </button>
-              </div>
-            </div>
-
-            {isUpdateAvailable && (
-              <div style={styles.panelRow}>
-                <span style={styles.panelLabel}>Action:</span>
-                <button
-                  onClick={triggerUpdate}
-                  style={styles.updateActionBtn}
-                  id="trigger-sw-update-btn"
-                >
-                  Reload & Apply Update
-                </button>
-              </div>
-            )}
-          </div>
-        </section>
       </main>
 
       <footer style={styles.footer}>
@@ -561,6 +568,27 @@ const styles = {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '2.5rem',
+  },
+  topbar: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    marginBottom: '-1rem',
+  },
+  settingsToggle: {
+    background: 'rgba(255, 255, 255, 0.05)',
+    border: '1px solid rgba(255, 255, 255, 0.12)',
+    color: '#cbd5e1',
+    borderRadius: '0.6rem',
+    padding: '0.4rem 0.8rem',
+    fontSize: '0.8rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
+  settingsTitle: {
+    fontSize: '1rem',
+    fontWeight: 700,
+    color: '#a855f7',
+    margin: 0,
   },
   header: {
     textAlign: 'center' as const,
