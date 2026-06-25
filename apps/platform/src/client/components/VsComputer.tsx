@@ -5,6 +5,7 @@ import type { Difficulty } from '../../games/_shared/ai.js';
 import type { StrategyGameId } from './vsBoard.js';
 import { GameBoard, type BoardViewLike } from './GameBoard.js';
 import { BubbleSiegeArena } from './BubbleSiegeArena.js';
+import { useI18n } from '../i18n/i18n.js';
 
 // Same-device "play vs computer" UI. Strategy games (Gomoku/Chess/Janggi) use the
 // generic LocalGame + shared GameBoard renderer; Bingo uses its own driver/panel.
@@ -50,6 +51,7 @@ type Active =
   | null;
 
 export function VsComputer() {
+  const { t } = useI18n();
   const [gameId, setGameId] = useState<GameId>('gomoku');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [active, setActive] = useState<Active>(null);
@@ -70,12 +72,10 @@ export function VsComputer() {
   if (!active) {
     return (
       <section style={styles.card} id="vs-computer-setup">
-        <h2 style={styles.header}>🤖 Play vs Computer</h2>
-        <p style={styles.desc}>
-          No opponent around? Play against the computer — pick a game and difficulty.
-        </p>
+        <h2 style={styles.header}>{t('vs.title')}</h2>
+        <p style={styles.desc}>{t('vs.desc')}</p>
 
-        <div style={styles.label}>Game</div>
+        <div style={styles.label}>{t('vs.game')}</div>
         <div style={styles.optionRow}>
           {GAMES.map((g) => (
             <button
@@ -92,7 +92,7 @@ export function VsComputer() {
 
         {gameId !== 'bingo' ? (
           <>
-            <div style={styles.label}>Difficulty</div>
+            <div style={styles.label}>{t('vs.difficulty')}</div>
             <div style={styles.optionRow}>
               {DIFFICULTIES.map((d) => (
                 <button
@@ -101,17 +101,17 @@ export function VsComputer() {
                   style={difficulty === d.id ? styles.optActive : styles.opt}
                   id={`vs-diff-${d.id}`}
                 >
-                  {d.label}
+                  {t(`vs.${d.id}`)}
                 </button>
               ))}
             </div>
           </>
         ) : (
-          <p style={styles.desc}>Bingo is a game of luck — no difficulty setting.</p>
+          <p style={styles.desc}>{t('vs.bingoNoDiff')}</p>
         )}
 
         <button onClick={start} style={styles.primary} id="vs-start-btn">
-          Start Game
+          {t('vs.start')}
         </button>
       </section>
     );
@@ -151,19 +151,20 @@ function StrategyPanel({
   onNew: () => void;
   onExit: () => void;
 }) {
+  const { t } = useI18n();
   const [sel, setSel] = useState<number | null>(null);
   const [, bump] = useReducer((x: number) => x + 1, 0);
 
   const outcome = game.outcome();
   const status = outcome
     ? outcome === 'win'
-      ? '🎉 You win!'
+      ? t('vs.youWin')
       : outcome === 'lose'
-        ? '💻 Computer wins'
-        : '🤝 Draw'
+        ? t('vs.youLose')
+        : t('vs.draw')
     : game.isHumanTurn()
-      ? 'Your turn'
-      : 'Computer thinking…';
+      ? t('vs.yourTurn')
+      : t('vs.thinking');
 
   const onCellClick = (boardIdx: number) => {
     if (outcome || !game.isHumanTurn()) return;
@@ -199,7 +200,7 @@ function StrategyPanel({
   return (
     <section style={styles.card} id="vs-computer-game">
       <h2 style={styles.header}>
-        {GAMES.find((g) => g.id === gameId)!.name} vs Computer ({difficulty})
+        {GAMES.find((g) => g.id === gameId)!.name} {t('vs.vsLabel')} ({t(`vs.${difficulty}`)})
       </h2>
       <div style={outcome ? styles.statusDone : styles.status} id="vs-status">
         {status}
@@ -217,10 +218,10 @@ function StrategyPanel({
 
       <div style={styles.controls}>
         <button onClick={onNew} style={styles.primary} id="vs-newgame-btn">
-          New Game
+          {t('vs.newGame')}
         </button>
         <button onClick={onExit} style={styles.secondary} id="vs-change-btn">
-          Change Game
+          {t('vs.changeGame')}
         </button>
       </div>
     </section>
@@ -271,6 +272,7 @@ function BingoPanel({
   onNew: () => void;
   onExit: () => void;
 }) {
+  const { t } = useI18n();
   const [, bump] = useReducer((x: number) => x + 1, 0);
   const v = game.view() as BingoView;
   const outcome = game.outcome();
@@ -279,13 +281,13 @@ function BingoPanel({
 
   const status = outcome
     ? outcome === 'win'
-      ? '🎉 Bingo! You win!'
+      ? t('bingo.win')
       : outcome === 'lose'
-        ? '💻 Computer got Bingo'
-        : '🤝 Draw'
+        ? t('bingo.lose')
+        : t('bingo.drawResult')
     : v.isMyTurn
-      ? 'Your turn — draw a number'
-      : 'Computer is playing…';
+      ? t('bingo.yourTurn')
+      : t('bingo.cpuTurn');
 
   const onMark = (value: number) => {
     if (outcome || !called.has(value) || marked.has(value)) return;
@@ -317,7 +319,7 @@ function BingoPanel({
 
   return (
     <section style={styles.card} id="vs-computer-game">
-      <h2 style={styles.header}>Bingo vs Computer</h2>
+      <h2 style={styles.header}>Bingo {t('vs.vsLabel')}</h2>
       <div style={outcome ? styles.statusDone : styles.status} id="vs-status">
         {status}
       </div>
@@ -340,7 +342,7 @@ function BingoPanel({
           style={game.canDraw() ? styles.primary : styles.disabled}
           id="bingo-draw-btn"
         >
-          Draw ({v.remaining})
+          {t('bingo.drawBtn')} ({v.remaining})
         </button>
         <button
           onClick={() => {
@@ -351,20 +353,20 @@ function BingoPanel({
           style={game.canClaim() ? styles.claim : styles.disabled}
           id="bingo-claim-btn"
         >
-          Bingo!
+          {t('bingo.bingo')}
         </button>
       </div>
 
       <div style={styles.calledStrip}>
-        Called: {v.called.length ? v.called.slice(-12).join(' · ') : '—'}
+        {t('bingo.called')} {v.called.length ? v.called.slice(-12).join(' · ') : '—'}
       </div>
 
       <div style={styles.controls}>
         <button onClick={onNew} style={styles.primary} id="vs-newgame-btn">
-          New Game
+          {t('vs.newGame')}
         </button>
         <button onClick={onExit} style={styles.secondary} id="vs-change-btn">
-          Change Game
+          {t('vs.changeGame')}
         </button>
       </div>
     </section>

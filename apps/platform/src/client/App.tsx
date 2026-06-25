@@ -13,6 +13,7 @@ import { InstallBanner } from './components/InstallBanner.js';
 import { TabActiveGate } from './components/TabActiveGate.js';
 import { VsComputer } from './components/VsComputer.js';
 import { OnlineHome, OnlineRoom } from './components/OnlineRoom.js';
+import { I18nProvider, useI18n } from './i18n/i18n.js';
 
 interface BoardLinkE2E {
   navigate: (path: string) => void;
@@ -30,6 +31,7 @@ interface BoardLinkE2E {
 }
 
 function AppContent() {
+  const { t, lang, setLang } = useI18n();
   const { context, forceMockContext } = useBrowserContext();
   const {
     isUpdateAvailable,
@@ -177,11 +179,7 @@ function AppContent() {
       {!isIndexedDbSupported && (
         <div style={styles.errorBanner} id="indexeddb-error-banner">
           <span style={styles.bannerIcon}>⚠️</span>
-          <div style={styles.bannerText}>
-            <strong>IndexedDB Blocked or Unsupported</strong>: Your cryptographic profile identity
-            and game stats will not be saved after closing the browser (often caused by
-            Private/Incognito Browsing). Please open in normal browsing mode for full persistence.
-          </div>
+          <div style={styles.bannerText}>{t('app.indexedDbWarn')}</div>
         </div>
       )}
 
@@ -192,55 +190,64 @@ function AppContent() {
 
       {/* Main UI layout */}
       <main style={styles.main}>
-        {!roomId && !token && (
-          <div style={styles.topbar}>
+        <div style={styles.topbar}>
+          <button
+            onClick={() => setLang(lang === 'ko' ? 'en' : 'ko')}
+            style={styles.settingsToggle}
+            id="lang-toggle"
+          >
+            {lang === 'ko' ? 'EN' : '한국어'}
+          </button>
+          {!roomId && !token && (
             <button
               onClick={() => setShowSettings((s) => !s)}
               style={styles.settingsToggle}
               id="settings-toggle"
             >
-              {showSettings ? '✕ Close' : '⚙️ Settings'}
+              {showSettings ? t('app.close') : t('app.settings')}
             </button>
-          </div>
-        )}
+          )}
+        </div>
         <header style={styles.header}>
           <h1 style={styles.title} onClick={() => navigate('/')}>
             BoardLink
           </h1>
-          <p style={styles.subtitle}>Casual Real-Time Multiplayer Board Games</p>
+          <p style={styles.subtitle}>{t('app.subtitle')}</p>
         </header>
 
         {showSettings && !roomId && !token && (
           <>
-            <h2 style={styles.settingsTitle}>⚙️ Settings</h2>
+            <h2 style={styles.settingsTitle}>{t('app.settingsTitle')}</h2>
             {/* User Identity Profile Card */}
             <section style={styles.card} id="identity-card">
-              <h2 style={styles.sectionHeader}>👤 Device Profile</h2>
+              <h2 style={styles.sectionHeader}>{t('profile.title')}</h2>
               {identity ? (
                 <div style={styles.profileDetails}>
                   <div style={styles.profileRow}>
-                    <span style={styles.label}>Display Name:</span>
+                    <span style={styles.label}>{t('profile.displayName')}</span>
                     <span style={styles.profileName} id="profile-display-name">
                       {identity.displayName}
                     </span>
                   </div>
                   <div style={styles.profileRow}>
-                    <span style={styles.label}>Public ID:</span>
+                    <span style={styles.label}>{t('profile.publicId')}</span>
                     <span style={styles.profileId} id="profile-public-id">
                       {identity.publicId}
                     </span>
                   </div>
                   <div style={styles.profileRow}>
-                    <span style={styles.label}>Storage Status:</span>
+                    <span style={styles.label}>{t('profile.storage')}</span>
                     <span style={styles.value} id="persistent-storage-status">
-                      {isPersistentStorageGranted ? 'PERSISTENT' : 'TEMPORARY'}
+                      {isPersistentStorageGranted
+                        ? t('profile.persistent')
+                        : t('profile.temporary')}
                     </span>
                   </div>
 
                   <div style={styles.divider} />
 
                   <div style={styles.friendCodeSection}>
-                    <span style={styles.label}>Friend Code:</span>
+                    <span style={styles.label}>{t('profile.friendCode')}</span>
                     {friendCode ? (
                       <div style={styles.codeRow}>
                         <span style={styles.codeValue} id="friend-code-value">
@@ -253,7 +260,7 @@ function AppContent() {
                             id="rotate-friend-code-btn"
                             disabled={!sessionToken}
                           >
-                            Rotate
+                            {t('profile.rotate')}
                           </button>
                           <button
                             onClick={revokeFriendCode}
@@ -261,7 +268,7 @@ function AppContent() {
                             id="revoke-friend-code-btn"
                             disabled={!sessionToken}
                           >
-                            Revoke
+                            {t('profile.revoke')}
                           </button>
                         </div>
                       </div>
@@ -272,7 +279,7 @@ function AppContent() {
                         id="issue-friend-code-btn"
                         disabled={!sessionToken}
                       >
-                        Issue Friend Code
+                        {t('profile.issue')}
                       </button>
                     )}
                   </div>
@@ -282,20 +289,18 @@ function AppContent() {
                     style={styles.resetButton}
                     id="reset-identity-btn"
                   >
-                    Reset Profile Identity
+                    {t('profile.reset')}
                   </button>
                 </div>
               ) : (
-                <p style={styles.description}>Generating accountless cryptographic keys...</p>
+                <p style={styles.description}>{t('profile.generating')}</p>
               )}
             </section>
 
             {/* Friend Code Lookup Panel */}
             <section style={styles.card} id="lookup-card">
-              <h2 style={styles.sectionHeader}>🔍 Search Friend Code</h2>
-              <p style={styles.description}>
-                Enter a friend's code to lookup their public profile ID.
-              </p>
+              <h2 style={styles.sectionHeader}>{t('lookup.title')}</h2>
+              <p style={styles.description}>{t('lookup.desc')}</p>
               <div style={styles.lookupInputRow}>
                 <input
                   type="text"
@@ -311,14 +316,14 @@ function AppContent() {
                   style={styles.primaryButton}
                   id="lookup-btn"
                 >
-                  {isSearching ? 'Searching...' : 'Search'}
+                  {isSearching ? t('lookup.searching') : t('lookup.search')}
                 </button>
               </div>
 
               {/* Lookup Results */}
               {lookupResult && (
                 <div style={styles.successResult} id="lookup-result-success">
-                  <span style={styles.resultLabel}>User Found:</span>
+                  <span style={styles.resultLabel}>{t('lookup.found')}</span>
                   <strong style={styles.resultName}>{lookupResult.displayName}</strong>
                   <code style={styles.resultId}>{lookupResult.publicId}</code>
                 </div>
@@ -326,19 +331,19 @@ function AppContent() {
 
               {lookupError === 'notfound' && (
                 <div style={styles.errorResult} id="lookup-result-notfound">
-                  ❌ Friend code not found or expired.
+                  {t('lookup.notfound')}
                 </div>
               )}
 
               {lookupError === 'ratelimit' && (
                 <div style={styles.errorResult} id="lookup-result-ratelimit">
-                  ⚠️ Too many lookups. Please wait a minute.
+                  {t('lookup.ratelimit')}
                 </div>
               )}
 
               {lookupError === 'error' && (
                 <div style={styles.errorResult} id="lookup-result-error">
-                  ❌ Search failed: {lookupErrorMsg}
+                  {t('lookup.error')} {lookupErrorMsg}
                 </div>
               )}
             </section>
@@ -385,33 +390,33 @@ function AppContent() {
           <>
             {/* System Dashboard */}
             <section style={styles.card}>
-              <h2 style={styles.sectionHeader}>System Status</h2>
+              <h2 style={styles.sectionHeader}>{t('system.title')}</h2>
               <div style={styles.statusGrid}>
                 <div style={styles.statusItem}>
-                  <span style={styles.label}>Protocol Version</span>
+                  <span style={styles.label}>{t('system.protocol')}</span>
                   <span style={styles.value} id="protocol-version">
                     {PROTOCOL_VERSION}
                   </span>
                 </div>
                 <div style={styles.statusItem}>
-                  <span style={styles.label}>Build ID</span>
+                  <span style={styles.label}>{t('system.build')}</span>
                   <span style={styles.value} id="build-id">
                     {BUILD_ID}
                   </span>
                 </div>
                 <div style={styles.statusItem}>
-                  <span style={styles.label}>Leader Status</span>
+                  <span style={styles.label}>{t('system.leader')}</span>
                   <span
                     style={isLeader ? styles.badgeLeader : styles.badgeFollower}
                     id="leader-status"
                   >
-                    {isLeader ? 'LEADER' : 'INACTIVE'}
+                    {isLeader ? t('system.leaderOn') : t('system.leaderOff')}
                   </span>
                 </div>
                 <div style={styles.statusItem}>
-                  <span style={styles.label}>Service Status</span>
+                  <span style={styles.label}>{t('system.service')}</span>
                   <span style={styles.badgeLeader} id="service-status">
-                    ONLINE
+                    {t('system.online')}
                   </span>
                 </div>
               </div>
@@ -516,15 +521,17 @@ function AppContent() {
 
 export default function App() {
   return (
-    <BrowserContextProvider>
-      <IdentityContextProvider>
-        <PwaManagerProvider>
-          <TabLeaderElectionProvider>
-            <AppContent />
-          </TabLeaderElectionProvider>
-        </PwaManagerProvider>
-      </IdentityContextProvider>
-    </BrowserContextProvider>
+    <I18nProvider>
+      <BrowserContextProvider>
+        <IdentityContextProvider>
+          <PwaManagerProvider>
+            <TabLeaderElectionProvider>
+              <AppContent />
+            </TabLeaderElectionProvider>
+          </PwaManagerProvider>
+        </IdentityContextProvider>
+      </BrowserContextProvider>
+    </I18nProvider>
   );
 }
 
@@ -572,6 +579,7 @@ const styles = {
   topbar: {
     display: 'flex',
     justifyContent: 'flex-end',
+    gap: '0.5rem',
     marginBottom: '-1rem',
   },
   settingsToggle: {

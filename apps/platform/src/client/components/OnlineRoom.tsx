@@ -3,6 +3,7 @@ import { useRoom } from '../realtime/useRoom.js';
 import { getGame } from '../../worker/room/gameRegistry.js';
 import { GameBoard, type BoardViewLike } from './GameBoard.js';
 import type { StrategyGameId } from './vsBoard.js';
+import { useI18n } from '../i18n/i18n.js';
 
 // Online multiplayer UI: create/join a room, lobby (ready + owner start), and an
 // in-match board. Reuses the same pure game modules as the server to fold
@@ -28,6 +29,7 @@ export function OnlineHome({
   sessionToken: string | null;
   navigate: (path: string) => void;
 }) {
+  const { t } = useI18n();
   const [gameId, setGameId] = useState<StrategyGameId>('gomoku');
   const [joinCode, setJoinCode] = useState('');
   const [busy, setBusy] = useState(false);
@@ -61,10 +63,10 @@ export function OnlineHome({
 
   return (
     <section style={s.card} id="online-home">
-      <h2 style={s.header}>🌐 Play Online</h2>
-      <p style={s.desc}>Create a room and share the code, or join a friend&apos;s room.</p>
+      <h2 style={s.header}>{t('online.title')}</h2>
+      <p style={s.desc}>{t('online.desc')}</p>
 
-      <div style={s.label}>Game</div>
+      <div style={s.label}>{t('online.game')}</div>
       <div style={s.row}>
         {ONLINE_GAMES.map((g) => (
           <button
@@ -83,17 +85,17 @@ export function OnlineHome({
         style={s.primary}
         id="online-create-btn"
       >
-        {busy ? 'Creating…' : 'Create Room'}
+        {busy ? t('online.creating') : t('online.create')}
       </button>
 
       <div style={s.divider} />
 
-      <div style={s.label}>Join with a code</div>
+      <div style={s.label}>{t('online.joinLabel')}</div>
       <div style={s.row}>
         <input
           value={joinCode}
           onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-          placeholder="e.g. K7M2QA"
+          placeholder="K7M2QA"
           style={s.input}
           id="online-join-input"
         />
@@ -102,12 +104,12 @@ export function OnlineHome({
           style={s.primary}
           id="online-join-btn"
         >
-          Join
+          {t('online.join')}
         </button>
       </div>
 
       {error && <div style={s.error}>{error}</div>}
-      {!sessionToken && <div style={s.muted}>Preparing your identity…</div>}
+      {!sessionToken && <div style={s.muted}>{t('online.preparing')}</div>}
     </section>
   );
 }
@@ -125,16 +127,17 @@ export function OnlineRoom({
   myId: string | null;
   onExit: () => void;
 }) {
+  const { t } = useI18n();
   const room = useRoom({ roomCode, sessionToken });
 
   const conn = room.connectionState;
   const connLabel =
     conn === 'IN_ROOM'
-      ? 'Connected'
+      ? t('online.connected')
       : conn === 'CONNECTING' || conn === 'AUTHENTICATING' || conn === 'AUTHENTICATED'
-        ? 'Connecting…'
+        ? t('online.connecting')
         : conn === 'CLOSED'
-          ? 'Disconnected'
+          ? t('online.disconnected')
           : conn;
 
   const inMatch = room.phase === 'IN_MATCH' || room.phase === 'COMPLETED';
@@ -142,14 +145,16 @@ export function OnlineRoom({
   return (
     <section style={s.card} id="room-page">
       <div style={s.roomHead}>
-        <h2 style={s.header}>🎮 Room {room.roomCode || roomCode}</h2>
+        <h2 style={s.header}>
+          🎮 {t('online.room')} {room.roomCode || roomCode}
+        </h2>
         <span style={s.connBadge}>{connLabel}</span>
       </div>
 
       {room.error && <div style={s.error}>{room.error}</div>}
 
       {!sessionToken ? (
-        <p style={s.muted}>Preparing your identity…</p>
+        <p style={s.muted}>{t('online.preparing')}</p>
       ) : inMatch && room.gameId ? (
         <OnlineMatch room={room} myId={myId} />
       ) : (
@@ -157,7 +162,7 @@ export function OnlineRoom({
       )}
 
       <button onClick={onExit} style={s.secondary} id="leave-room-button">
-        Leave Room
+        {t('online.leave')}
       </button>
     </section>
   );
@@ -166,6 +171,7 @@ export function OnlineRoom({
 type RoomApi = ReturnType<typeof useRoom>;
 
 function OnlineLobby({ room, myId }: { room: RoomApi; myId: string | null }) {
+  const { t } = useI18n();
   const [gameId, setGameId] = useState<StrategyGameId>('gomoku');
   const isOwner = !!myId && room.ownerId === myId;
   const me = room.members.find((m) => m.userId === myId);
@@ -174,13 +180,15 @@ function OnlineLobby({ room, myId }: { room: RoomApi; myId: string | null }) {
   return (
     <div style={s.col}>
       <div style={s.shareRow}>
-        <span style={s.label}>Share this code</span>
+        <span style={s.label}>{t('online.share')}</span>
         <span style={s.codeBig} id="room-share-code">
           {room.roomCode}
         </span>
       </div>
 
-      <div style={s.label}>Players ({activeMembers.length})</div>
+      <div style={s.label}>
+        {t('online.players')} ({activeMembers.length})
+      </div>
       <div style={s.col}>
         {activeMembers.map((m) => (
           <div key={m.userId} style={s.memberRow}>
@@ -189,7 +197,9 @@ function OnlineLobby({ room, myId }: { room: RoomApi; myId: string | null }) {
               {m.userId === room.ownerId && ' 👑'}
               {m.userId === myId && ' (you)'}
             </span>
-            <span style={m.ready ? s.readyOn : s.readyOff}>{m.ready ? 'Ready' : 'Not ready'}</span>
+            <span style={m.ready ? s.readyOn : s.readyOff}>
+              {m.ready ? t('online.ready') : t('online.notReady')}
+            </span>
           </div>
         ))}
       </div>
@@ -200,13 +210,13 @@ function OnlineLobby({ room, myId }: { room: RoomApi; myId: string | null }) {
         id="ready-toggle-btn"
         disabled={room.connectionState !== 'IN_ROOM'}
       >
-        {me?.ready ? 'Cancel Ready' : "I'm Ready"}
+        {me?.ready ? t('online.cancelReady') : t('online.imReady')}
       </button>
 
       {isOwner && (
         <>
           <div style={s.divider} />
-          <div style={s.label}>Start a match (owner)</div>
+          <div style={s.label}>{t('online.ownerStart')}</div>
           <div style={s.row}>
             {ONLINE_GAMES.map((g) => (
               <button
@@ -224,9 +234,9 @@ function OnlineLobby({ room, myId }: { room: RoomApi; myId: string | null }) {
             id="start-match-btn"
             disabled={activeMembers.length < 2 || room.connectionState !== 'IN_ROOM'}
           >
-            Start Match
+            {t('online.startMatch')}
           </button>
-          {activeMembers.length < 2 && <div style={s.muted}>Waiting for another player…</div>}
+          {activeMembers.length < 2 && <div style={s.muted}>{t('online.waiting')}</div>}
         </>
       )}
     </div>
@@ -234,6 +244,7 @@ function OnlineLobby({ room, myId }: { room: RoomApi; myId: string | null }) {
 }
 
 function OnlineMatch({ room, myId }: { room: RoomApi; myId: string | null }) {
+  const { t } = useI18n();
   const [sel, setSel] = useState<number | null>(null);
   const gameId = room.gameId!;
   const mod = getGame(gameId);
@@ -245,7 +256,7 @@ function OnlineMatch({ room, myId }: { room: RoomApi; myId: string | null }) {
     return st;
   }, [mod, room.matchState, room.gameEvents]);
 
-  if (!mod || live == null) return <p style={s.muted}>Loading match…</p>;
+  if (!mod || live == null) return <p style={s.muted}>{t('online.loading')}</p>;
 
   const seats = (live as { seats?: string[] }).seats ?? [];
   const mySeat = myId ? seats.indexOf(myId) : -1;
@@ -255,20 +266,20 @@ function OnlineMatch({ room, myId }: { room: RoomApi; myId: string | null }) {
   }) as BoardViewLike & { isMyTurn?: boolean };
 
   if (!STRATEGY.has(gameId)) {
-    return <p style={s.muted}>Match in progress ({gameId}). No board renderer yet.</p>;
+    return <p style={s.muted}>{t('online.noRenderer', { game: gameId })}</p>;
   }
 
   const result = room.matchResult as { winnerId?: string | null } | null;
   const done = room.phase === 'COMPLETED';
   const status = done
     ? result && result.winnerId === myId
-      ? '🎉 You win!'
+      ? t('vs.youWin')
       : result && result.winnerId == null
-        ? '🤝 Draw'
-        : '💻 You lose'
+        ? t('vs.draw')
+        : t('vs.youLose')
     : view.isMyTurn
-      ? 'Your turn'
-      : "Opponent's turn";
+      ? t('online.yourTurn')
+      : t('online.oppTurn');
 
   const targets = (() => {
     if (sel === null) return new Set<number>();

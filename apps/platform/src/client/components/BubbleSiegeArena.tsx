@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useReducer, useState } from 'react';
 import { BubbleSiegeLocalGame } from '../realtime/BubbleSiegeLocalGame.js';
 import type { Difficulty } from '../../games/_shared/ai.js';
+import { useI18n } from '../i18n/i18n.js';
 
 // Real-time arena for Bubble Siege vs the computer. Self-manages the driver's
 // timers (created in a memo, started/stopped via effect). A light UI ticker
@@ -35,6 +36,7 @@ export function BubbleSiegeArena({
   difficulty: Difficulty;
   onExit: () => void;
 }) {
+  const { t } = useI18n();
   const [gen, setGen] = useState(0);
   const game = useMemo(
     () => new BubbleSiegeLocalGame({ difficulty, seed: `${gen}-${Date.now()}` }),
@@ -79,27 +81,35 @@ export function BubbleSiegeArena({
 
   const status = outcome
     ? outcome === 'win'
-      ? '🎉 You win!'
+      ? t('vs.youWin')
       : outcome === 'lose'
-        ? '💻 Computer wins'
-        : '🤝 Draw'
+        ? t('vs.youLose')
+        : t('vs.draw')
     : v.phase === 'COUNTDOWN'
-      ? `Round ${v.currentRound} starting… ${secsLeft}`
+      ? t('bubble.starting', { n: v.currentRound, s: secsLeft })
       : v.phase === 'ACTIVE'
         ? isAttacker
-          ? `Attack! Tap empty space to spawn balls — keep them alive (${secsLeft}s)`
-          : `Defend! Tap balls to pop them before time runs out (${secsLeft}s)`
-        : 'Round over';
+          ? t('bubble.attackHint', { s: secsLeft })
+          : t('bubble.defendHint', { s: secsLeft })
+        : t('bubble.roundOver');
 
   return (
     <section style={styles.card} id="vs-computer-game">
-      <h2 style={styles.header}>Bubble Siege vs Computer ({difficulty})</h2>
+      <h2 style={styles.header}>
+        Bubble Siege {t('vs.vsLabel')} ({t(`vs.${difficulty}`)})
+      </h2>
 
       <div style={styles.scoreRow}>
         <span>
-          Round <strong>{v.currentRound}</strong>/2
+          {t('bubble.round')} <strong>{v.currentRound}</strong>/2
         </span>
-        <span style={isAttacker ? styles.attackBadge : styles.defendBadge}>{v.myRole}</span>
+        <span style={isAttacker ? styles.attackBadge : styles.defendBadge}>
+          {v.myRole === 'ATTACKER'
+            ? t('bubble.attacker')
+            : v.myRole === 'DEFENDER'
+              ? t('bubble.defender')
+              : v.myRole}
+        </span>
         <span>
           You <strong>{v.scoreA ?? '–'}</strong> · CPU <strong>{v.scoreB ?? '–'}</strong>
         </span>
@@ -141,10 +151,10 @@ export function BubbleSiegeArena({
 
       <div style={styles.controls}>
         <button onClick={() => setGen((g) => g + 1)} style={styles.primary} id="vs-newgame-btn">
-          New Game
+          {t('vs.newGame')}
         </button>
         <button onClick={onExit} style={styles.secondary} id="vs-change-btn">
-          Change Game
+          {t('vs.changeGame')}
         </button>
       </div>
     </section>
