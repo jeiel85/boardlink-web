@@ -127,6 +127,10 @@ export class RoomConnection {
       this.startPing();
     } else if (msg.messageType === 'ROOM_JOINED') {
       this.setState('IN_ROOM');
+      // Rejoining a room that already has an active match (e.g. after a
+      // reconnect): pull the current authoritative state to restore the board.
+      const matchId = (msg.payload as { matchId?: string }).matchId;
+      if (matchId) this.requestResync(matchId, 0, '');
     } else if (msg.messageType === 'SESSION_REJECTED') {
       this.closed = true;
       this.setState('CLOSED');

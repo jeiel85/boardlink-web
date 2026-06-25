@@ -542,6 +542,7 @@ export class RoomDO extends DurableObject<Env> {
         members: updatedMembers.map(memberRowToDto),
         config: JSON.parse(this.getMeta('game_config') ?? '{}') as Record<string, unknown>,
         matchId: this.getMeta('match_id') ?? undefined,
+        gameId: this.getMeta('game_id') ?? undefined,
         resumeToken: myRow?.resume_token ?? '',
         serverSequence: parseInt(this.getMeta('server_sequence') ?? '0', 10),
         serverMs: Date.now(),

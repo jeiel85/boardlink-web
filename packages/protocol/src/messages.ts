@@ -99,6 +99,7 @@ export const RoomJoinedPayloadSchema = z.object({
   members: z.array(RoomMemberSchema),
   config: z.record(z.unknown()),
   matchId: z.string().optional(),
+  gameId: z.string().optional(),
   resumeToken: z.string(),
   serverSequence: z.number().int().nonnegative(),
   serverMs: z.number().int().nonnegative(),

@@ -67,6 +67,7 @@ export function useRoom({ roomCode, sessionToken, enabled = true }: UseRoomOptio
             ownerId: msg.payload.ownerId,
             members: msg.payload.members,
             matchId: msg.payload.matchId ?? null,
+            gameId: msg.payload.gameId ?? prev.gameId,
             serverSequence: msg.payload.serverSequence,
             error: null,
           };
