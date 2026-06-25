@@ -11,6 +11,7 @@ import { IdentityContextProvider, useIdentity } from './identity/IdentityManager
 import { InAppGate } from './components/InAppGate.js';
 import { InstallBanner } from './components/InstallBanner.js';
 import { TabActiveGate } from './components/TabActiveGate.js';
+import { VsComputer } from './components/VsComputer.js';
 
 interface BoardLinkE2E {
   navigate: (path: string) => void;
@@ -359,29 +360,33 @@ function AppContent() {
             </button>
           </section>
         ) : (
-          <section style={styles.card} id="landing-page">
-            <h2 style={styles.sectionHeader}>Welcome to BoardLink</h2>
-            <p style={styles.description}>
-              Choose an option below to simulate navigating to different parts of the application.
-            </p>
+          <>
+            <VsComputer />
 
-            <div style={styles.navGrid}>
-              <button
-                onClick={() => navigate('/room/room123')}
-                style={styles.navButton}
-                id="nav-room-123"
-              >
-                Go to Room: room123
-              </button>
-              <button
-                onClick={() => navigate('/join/token456')}
-                style={styles.navButton}
-                id="nav-join-456"
-              >
-                Accept Invite: token456
-              </button>
-            </div>
-          </section>
+            <section style={styles.card} id="landing-page">
+              <h2 style={styles.sectionHeader}>Welcome to BoardLink</h2>
+              <p style={styles.description}>
+                Choose an option below to simulate navigating to different parts of the application.
+              </p>
+
+              <div style={styles.navGrid}>
+                <button
+                  onClick={() => navigate('/room/room123')}
+                  style={styles.navButton}
+                  id="nav-room-123"
+                >
+                  Go to Room: room123
+                </button>
+                <button
+                  onClick={() => navigate('/join/token456')}
+                  style={styles.navButton}
+                  id="nav-join-456"
+                >
+                  Accept Invite: token456
+                </button>
+              </div>
+            </section>
+          </>
         )}
 
         {/* System Dashboard */}

@@ -1,0 +1,497 @@
+import { useReducer, useState } from 'react';
+import { LocalGame } from '../realtime/LocalGame.js';
+import type { Difficulty } from '../../games/_shared/ai.js';
+import { displayToBoard, type StrategyGameId } from './vsBoard.js';
+
+// Same-device "play vs computer" UI for the turn-based strategy games. Renders a
+// board, lets the human click moves, and the (already-tested) LocalGame drives
+// the AI reply. No server / WebSocket involved.
+
+const GAMES: { id: StrategyGameId; name: string; sub: string }[] = [
+  { id: 'gomoku', name: 'Gomoku', sub: '오목' },
+  { id: 'chess', name: 'Chess', sub: '체스' },
+  { id: 'janggi', name: 'Janggi', sub: '장기' },
+];
+
+const DIFFICULTIES: { id: Difficulty; label: string }[] = [
+  { id: 'easy', label: 'Easy' },
+  { id: 'medium', label: 'Medium' },
+  { id: 'hard', label: 'Hard' },
+];
+
+const CHESS_GLYPH: Record<string, string> = {
+  K: '♚',
+  Q: '♛',
+  R: '♜',
+  B: '♝',
+  N: '♞',
+  P: '♟',
+};
+
+const JANGGI_GLYPH: Record<string, string> = {
+  G: '宮',
+  S: '士',
+  H: '馬',
+  E: '象',
+  R: '車',
+  C: '包',
+  P: '卒',
+};
+
+interface GomokuView {
+  board: number[];
+  size: number;
+  mySeat: number | null;
+  lastMove: { x: number; y: number } | null;
+}
+interface ChessView {
+  board: string[];
+  myColor: 'w' | 'b' | null;
+  lastMove: { from: number; to: number } | null;
+}
+interface JanggiView {
+  board: string[];
+  mySeat: number | null;
+  lastMove: { from: number; to: number } | null;
+}
+
+export function VsComputer() {
+  const [gameId, setGameId] = useState<StrategyGameId>('gomoku');
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+  const [game, setGame] = useState<LocalGame | null>(null);
+  const [sel, setSel] = useState<number | null>(null);
+  const [, bump] = useReducer((x: number) => x + 1, 0);
+
+  const start = () => {
+    setGame(
+      new LocalGame({
+        gameId,
+        difficulty,
+        seed: Math.random().toString(36).slice(2),
+      }),
+    );
+    setSel(null);
+    bump();
+  };
+
+  const reset = () => {
+    setGame(null);
+    setSel(null);
+  };
+
+  if (!game) {
+    return (
+      <section style={styles.card} id="vs-computer-setup">
+        <h2 style={styles.header}>🤖 Play vs Computer</h2>
+        <p style={styles.desc}>
+          No opponent around? Play a strategy game against the computer — pick a game and
+          difficulty.
+        </p>
+
+        <div style={styles.label}>Game</div>
+        <div style={styles.optionRow}>
+          {GAMES.map((g) => (
+            <button
+              key={g.id}
+              onClick={() => setGameId(g.id)}
+              style={gameId === g.id ? styles.optActive : styles.opt}
+              id={`vs-game-${g.id}`}
+            >
+              {g.name}
+              <span style={styles.optSub}>{g.sub}</span>
+            </button>
+          ))}
+        </div>
+
+        <div style={styles.label}>Difficulty</div>
+        <div style={styles.optionRow}>
+          {DIFFICULTIES.map((d) => (
+            <button
+              key={d.id}
+              onClick={() => setDifficulty(d.id)}
+              style={difficulty === d.id ? styles.optActive : styles.opt}
+              id={`vs-diff-${d.id}`}
+            >
+              {d.label}
+            </button>
+          ))}
+        </div>
+
+        <button onClick={start} style={styles.primary} id="vs-start-btn">
+          Start Game
+        </button>
+      </section>
+    );
+  }
+
+  const outcome = game.outcome();
+  const status = outcome
+    ? outcome === 'win'
+      ? '🎉 You win!'
+      : outcome === 'lose'
+        ? '💻 Computer wins'
+        : '🤝 Draw'
+    : game.isHumanTurn()
+      ? 'Your turn'
+      : 'Computer thinking…';
+
+  const onCellClick = (boardIdx: number) => {
+    if (outcome || !game.isHumanTurn()) return;
+    if (gameId === 'gomoku') {
+      const v = game.view() as GomokuView;
+      const x = boardIdx % v.size;
+      const y = Math.floor(boardIdx / v.size);
+      game.submit({ type: 'PLACE_STONE', x, y });
+      setSel(null);
+      bump();
+      return;
+    }
+    // chess / janggi: click source then destination
+    const ownPiece = isOwnPiece(game, gameId, boardIdx);
+    if (sel === null) {
+      if (ownPiece) setSel(boardIdx);
+      return;
+    }
+    if (boardIdx === sel) {
+      setSel(null);
+      return;
+    }
+    if (ownPiece) {
+      setSel(boardIdx);
+      return;
+    }
+    const cmd =
+      gameId === 'chess'
+        ? { type: 'MOVE', from: sel, to: boardIdx, promotion: 'Q' }
+        : { type: 'MOVE', from: sel, to: boardIdx };
+    game.submit(cmd);
+    setSel(null);
+    bump();
+  };
+
+  return (
+    <section style={styles.card} id="vs-computer-game">
+      <div style={styles.gameHeader}>
+        <h2 style={styles.header}>
+          {GAMES.find((g) => g.id === gameId)!.name} vs Computer ({difficulty})
+        </h2>
+      </div>
+      <div style={outcome ? styles.statusDone : styles.status} id="vs-status">
+        {status}
+      </div>
+
+      <div style={styles.boardWrap}>
+        {gameId === 'gomoku' && <GomokuBoard game={game} onCell={onCellClick} />}
+        {gameId === 'chess' && <ChessBoard game={game} sel={sel} onCell={onCellClick} />}
+        {gameId === 'janggi' && <JanggiBoard game={game} sel={sel} onCell={onCellClick} />}
+      </div>
+
+      <div style={styles.controls}>
+        <button onClick={start} style={styles.primary} id="vs-newgame-btn">
+          New Game
+        </button>
+        <button onClick={reset} style={styles.secondary} id="vs-change-btn">
+          Change Game
+        </button>
+      </div>
+    </section>
+  );
+}
+
+// ---------- helpers ----------
+
+function isOwnPiece(game: LocalGame, gameId: StrategyGameId, boardIdx: number): boolean {
+  if (gameId === 'chess') {
+    const v = game.view() as ChessView;
+    const code = v.board[boardIdx];
+    if (code === '') return false;
+    const color = code === code.toUpperCase() ? 'w' : 'b';
+    return color === v.myColor;
+  }
+  const v = game.view() as JanggiView;
+  const code = v.board[boardIdx];
+  if (code === '') return false;
+  return code[0] === String(v.mySeat);
+}
+
+function legalTargets(game: LocalGame, sel: number | null): Set<number> {
+  if (sel === null) return new Set();
+  const cmds = game.legalCommands() as { from?: number; to?: number }[];
+  const out = new Set<number>();
+  for (const c of cmds) if (c.from === sel && typeof c.to === 'number') out.add(c.to);
+  return out;
+}
+
+// ---------- boards ----------
+
+function GomokuBoard({ game, onCell }: { game: LocalGame; onCell: (i: number) => void }) {
+  const v = game.view() as GomokuView;
+  const size = v.size;
+  const lastIdx = v.lastMove ? v.lastMove.y * size + v.lastMove.x : -1;
+  const cells = [];
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const idx = displayToBoard('gomoku', r, c, v);
+      const val = v.board[idx];
+      cells.push(
+        <button
+          key={idx}
+          onClick={() => onCell(idx)}
+          style={{
+            ...styles.gridCell,
+            background: '#caa66a',
+            border: '1px solid #8a6d3b',
+            boxShadow: idx === lastIdx ? 'inset 0 0 0 2px #ef4444' : undefined,
+          }}
+        >
+          {val !== -1 && (
+            <span
+              style={{
+                ...styles.stone,
+                background:
+                  val === v.mySeat
+                    ? 'radial-gradient(circle at 35% 30%, #fff, #cbd5e1)'
+                    : 'radial-gradient(circle at 35% 30%, #555, #111)',
+                color: val === v.mySeat ? '#111' : '#fff',
+              }}
+            />
+          )}
+        </button>,
+      );
+    }
+  }
+  return (
+    <div style={{ ...styles.grid, gridTemplateColumns: `repeat(${size}, 1fr)`, maxWidth: 360 }}>
+      {cells}
+    </div>
+  );
+}
+
+function ChessBoard({
+  game,
+  sel,
+  onCell,
+}: {
+  game: LocalGame;
+  sel: number | null;
+  onCell: (i: number) => void;
+}) {
+  const v = game.view() as ChessView;
+  const targets = legalTargets(game, sel);
+  const cells = [];
+  for (let dr = 0; dr < 8; dr++) {
+    for (let dc = 0; dc < 8; dc++) {
+      const idx = displayToBoard('chess', dr, dc, v);
+      const code = v.board[idx];
+      const dark = (dr + dc) % 2 === 1;
+      cells.push(
+        <button
+          key={idx}
+          onClick={() => onCell(idx)}
+          style={{
+            ...styles.gridCell,
+            background: dark ? '#6b7280' : '#cbd5e1',
+            boxShadow:
+              idx === sel
+                ? 'inset 0 0 0 3px #6366f1'
+                : targets.has(idx)
+                  ? 'inset 0 0 0 3px rgba(16,185,129,0.7)'
+                  : undefined,
+          }}
+        >
+          {code !== '' && (
+            <span
+              style={{
+                ...styles.piece,
+                color: code === code.toUpperCase() ? '#f8fafc' : '#0f172a',
+                textShadow: '0 1px 1px rgba(0,0,0,0.4)',
+              }}
+            >
+              {CHESS_GLYPH[code.toUpperCase()]}
+            </span>
+          )}
+        </button>,
+      );
+    }
+  }
+  return (
+    <div style={{ ...styles.grid, gridTemplateColumns: 'repeat(8, 1fr)', maxWidth: 360 }}>
+      {cells}
+    </div>
+  );
+}
+
+function JanggiBoard({
+  game,
+  sel,
+  onCell,
+}: {
+  game: LocalGame;
+  sel: number | null;
+  onCell: (i: number) => void;
+}) {
+  const v = game.view() as JanggiView;
+  const targets = legalTargets(game, sel);
+  const cells = [];
+  for (let dr = 0; dr < 10; dr++) {
+    for (let dc = 0; dc < 9; dc++) {
+      const idx = displayToBoard('janggi', dr, dc, v);
+      const code = v.board[idx];
+      cells.push(
+        <button
+          key={idx}
+          onClick={() => onCell(idx)}
+          style={{
+            ...styles.gridCell,
+            background: '#d8b46a',
+            border: '1px solid #9a7b40',
+            boxShadow:
+              idx === sel
+                ? 'inset 0 0 0 3px #6366f1'
+                : targets.has(idx)
+                  ? 'inset 0 0 0 3px rgba(16,185,129,0.8)'
+                  : undefined,
+          }}
+        >
+          {code !== '' && (
+            <span
+              style={{
+                ...styles.janggiPiece,
+                color: code[0] === '0' ? '#15803d' : '#b91c1c',
+              }}
+            >
+              {JANGGI_GLYPH[code[1]]}
+            </span>
+          )}
+        </button>,
+      );
+    }
+  }
+  return (
+    <div style={{ ...styles.grid, gridTemplateColumns: 'repeat(9, 1fr)', maxWidth: 360 }}>
+      {cells}
+    </div>
+  );
+}
+
+const styles = {
+  card: {
+    background: 'rgba(30, 41, 59, 0.4)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    borderRadius: '1.5rem',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    padding: '2rem',
+    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '1rem',
+  },
+  header: { fontSize: '1.25rem', fontWeight: 600, margin: 0, color: '#f8fafc' },
+  desc: { fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.5, margin: 0 },
+  label: { fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, marginTop: '0.25rem' },
+  optionRow: { display: 'flex', gap: '0.5rem', flexWrap: 'wrap' as const },
+  opt: {
+    flex: 1,
+    minWidth: 80,
+    background: 'rgba(255,255,255,0.03)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '0.75rem',
+    color: '#cbd5e1',
+    padding: '0.6rem 0.5rem',
+    fontSize: '0.85rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: '0.15rem',
+  },
+  optActive: {
+    flex: 1,
+    minWidth: 80,
+    background: '#6366f1',
+    border: '1px solid #6366f1',
+    borderRadius: '0.75rem',
+    color: '#fff',
+    padding: '0.6rem 0.5rem',
+    fontSize: '0.85rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: '0.15rem',
+    boxShadow: '0 0 12px rgba(99,102,241,0.3)',
+  },
+  optSub: { fontSize: '0.65rem', opacity: 0.7, fontWeight: 400 },
+  primary: {
+    background: '#6366f1',
+    color: '#fff',
+    border: 'none',
+    padding: '0.75rem 1.5rem',
+    borderRadius: '0.75rem',
+    fontWeight: 600,
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+  },
+  secondary: {
+    background: 'transparent',
+    color: '#f8fafc',
+    border: '1px solid rgba(255,255,255,0.2)',
+    padding: '0.75rem 1.5rem',
+    borderRadius: '0.75rem',
+    fontWeight: 600,
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+  },
+  gameHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  status: {
+    textAlign: 'center' as const,
+    fontSize: '0.95rem',
+    fontWeight: 600,
+    color: '#a5b4fc',
+    padding: '0.4rem',
+  },
+  statusDone: {
+    textAlign: 'center' as const,
+    fontSize: '1.1rem',
+    fontWeight: 800,
+    color: '#10b981',
+    padding: '0.4rem',
+  },
+  boardWrap: { display: 'flex', justifyContent: 'center' },
+  grid: {
+    display: 'grid',
+    width: '100%',
+    aspectRatio: '1 / 1',
+    gap: 0,
+    borderRadius: '0.5rem',
+    overflow: 'hidden',
+  },
+  gridCell: {
+    aspectRatio: '1 / 1',
+    border: 'none',
+    padding: 0,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative' as const,
+  },
+  stone: {
+    width: '78%',
+    height: '78%',
+    borderRadius: '50%',
+    display: 'block',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.5)',
+  },
+  piece: { fontSize: 'min(6vw, 28px)', lineHeight: 1, userSelect: 'none' as const },
+  janggiPiece: {
+    fontSize: 'min(5vw, 22px)',
+    fontWeight: 800,
+    lineHeight: 1,
+    userSelect: 'none' as const,
+  },
+  controls: { display: 'flex', gap: '0.75rem' },
+};

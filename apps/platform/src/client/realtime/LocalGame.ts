@@ -93,6 +93,20 @@ export class LocalGame {
     return !this.isOver() && this.ai.seatToMove(this.state) === this.humanSeat;
   }
 
+  // Legal commands available to the human right now (for highlighting in the UI).
+  legalCommands(): unknown[] {
+    const actor = { userId: HUMAN_ID, seatIndex: this.humanSeat };
+    return (this.module.enumerateCommands?.({ state: this.state, actor }) ?? []) as unknown[];
+  }
+
+  // Outcome from the human's perspective once the game is over.
+  outcome(): 'win' | 'lose' | 'draw' | null {
+    const r = this.module.evaluateResult(this.state) as { winnerId: string | null } | null;
+    if (!r) return null;
+    if (r.winnerId == null) return 'draw';
+    return r.winnerId === HUMAN_ID ? 'win' : 'lose';
+  }
+
   submit(command: unknown): SubmitResult {
     if (this.isOver()) return { ok: false, reason: 'Game is already over' };
     const actor = { userId: HUMAN_ID, seatIndex: this.humanSeat };
