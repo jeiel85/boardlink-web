@@ -1,5 +1,7 @@
 # BoardLink Web Design Bundle
 
+**English** · [한국어](./README.ko.md)
+
 Production-ready design bundle for a free, accountless, browser-first multiplayer game platform.
 
 > **Working name:** BoardLink  
@@ -39,13 +41,13 @@ No account, email address, phone number, advertising SDK, analytics SDK, social 
 All five launch games are implemented as deterministic modules on a shared,
 server-authoritative game SDK (every match is replayable from its event log).
 
-| Game            | vs Computer          | Online | Notes                                          |
-| --------------- | -------------------- | ------ | ---------------------------------------------- |
-| Gomoku (오목)   | ✅ (3 levels)        | ✅     | 15×15, five-in-a-row                           |
-| Chess (체스)    | ✅ (3 levels)        | ✅     | full rules: castling, en passant, promotion    |
-| Janggi (장기)   | ✅ (3 levels)        | ✅     | Korean chess — palace moves, cannons, checkmate |
-| Bingo           | ✅ (auto-opponent)   | —      | turn-based draw / mark / claim                 |
-| Bubble Siege    | ✅ (3 levels)        | —      | original asymmetric real-time arena; online play is next |
+| Game          | vs Computer        | Online | Notes                                                    |
+| ------------- | ------------------ | ------ | -------------------------------------------------------- |
+| Gomoku (오목) | ✅ (3 levels)      | ✅     | 15×15, five-in-a-row                                     |
+| Chess (체스)  | ✅ (3 levels)      | ✅     | full rules: castling, en passant, promotion              |
+| Janggi (장기) | ✅ (3 levels)      | ✅     | Korean chess — palace moves, cannons, checkmate          |
+| Bingo         | ✅ (auto-opponent) | —      | turn-based draw / mark / claim                           |
+| Bubble Siege  | ✅ (3 levels)      | —      | original asymmetric real-time arena; online play is next |
 
 The computer opponent is a generic alpha-beta engine with per-game heuristics
 (difficulty = search depth); Bingo uses a greedy auto-player.
