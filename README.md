@@ -5,6 +5,20 @@ Production-ready design bundle for a free, accountless, browser-first multiplaye
 > **Working name:** BoardLink  
 > The product name is provisional. Perform domain, app-name, and trademark checks before public branding.
 
+## ▶ Play it now
+
+**Live:** https://boardlink.jeiel85.workers.dev
+
+BoardLink is deployed and playable today:
+
+- **Play vs computer** (same-device, no network) — Gomoku, Chess, and Janggi with
+  Easy / Medium / Hard difficulty, plus Bingo against an auto-opponent.
+- **Play online** — create a room, share the 6-character code, and play Gomoku,
+  Chess, or Janggi in real time over WebSockets. Reconnecting mid-match restores
+  the board.
+- **Anonymous** — a device identity is generated on first visit; no account,
+  email, or login. Installable as a PWA.
+
 ## Product statement
 
 BoardLink lets people open a link on a phone, tablet, or computer and immediately play short multiplayer games.
@@ -19,19 +33,24 @@ Core entry paths:
 
 No account, email address, phone number, advertising SDK, analytics SDK, social login, or public chat is required for the initial release.
 
-## Initial game set
+## Games
 
-- Bubble Siege — original asymmetric real-time touch game
-- Bingo
-- Gomoku
+All five launch games are implemented as deterministic modules on a shared,
+server-authoritative game SDK (every match is replayable from its event log).
 
-Later:
+| Game            | vs Computer          | Online | Notes                                          |
+| --------------- | -------------------- | ------ | ---------------------------------------------- |
+| Gomoku (오목)   | ✅ (3 levels)        | ✅     | 15×15, five-in-a-row                           |
+| Chess (체스)    | ✅ (3 levels)        | ✅     | full rules: castling, en passant, promotion    |
+| Janggi (장기)   | ✅ (3 levels)        | ✅     | Korean chess — palace moves, cannons, checkmate |
+| Bingo           | ✅ (auto-opponent)   | —      | turn-based draw / mark / claim                 |
+| Bubble Siege    | —                    | —      | original asymmetric real-time game; server module + rules complete, client renderer pending |
 
-- Chess
-- Janggi
-- Team and party modes
-- WebRTC direct transport
-- Experimental offline QR pairing
+The computer opponent is a generic alpha-beta engine with per-game heuristics
+(difficulty = search depth); Bingo uses a greedy auto-player.
+
+Later: team and party modes, WebRTC direct transport, spectators, tournaments,
+and experimental offline QR pairing.
 
 ## Recommended stack
 
