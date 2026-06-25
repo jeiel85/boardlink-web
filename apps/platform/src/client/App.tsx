@@ -304,7 +304,7 @@ function AppContent() {
               <div style={styles.lookupInputRow}>
                 <input
                   type="text"
-                  placeholder="e.g. ABCD-1234"
+                  placeholder={t('lookup.placeholder')}
                   value={lookupQuery}
                   onChange={(e) => setLookupQuery(e.target.value.toUpperCase())}
                   style={styles.input}
@@ -360,13 +360,10 @@ function AppContent() {
           />
         ) : token ? (
           <section style={styles.card} id="join-page">
-            <h2 style={styles.sectionHeader}>✉️ Invitation Received</h2>
-            <p style={styles.description}>
-              You have been invited to join a board game session. This invitation preview page
-              compiles safely within in-app webviews.
-            </p>
+            <h2 style={styles.sectionHeader}>{t('invite.title')}</h2>
+            <p style={styles.description}>{t('invite.desc')}</p>
             <div style={styles.tokenContainer}>
-              <span style={styles.label}>Token:</span>
+              <span style={styles.label}>{t('invite.token')}</span>
               <span style={styles.tokenValue} id="invitation-token">
                 {token}
               </span>
@@ -376,7 +373,7 @@ function AppContent() {
               style={styles.primaryButton}
               id="accept-invitation-button"
             >
-              Enter Game Room
+              {t('invite.enter')}
             </button>
           </section>
         ) : showSettings ? null : (
@@ -424,10 +421,10 @@ function AppContent() {
 
             {/* E2E Testing and Mock Controls Panel */}
             <section style={styles.testingPanel} id="testing-controls-panel">
-              <h3 style={styles.panelTitle}>⚙️ E2E Mock Settings</h3>
+              <h3 style={styles.panelTitle}>{t('e2e.title')}</h3>
               <div style={styles.panelGrid}>
                 <div style={styles.panelRow}>
-                  <span style={styles.panelLabel}>Mock Context:</span>
+                  <span style={styles.panelLabel}>{t('e2e.mockContext')}</span>
                   <div style={styles.panelButtonGroup}>
                     <button
                       onClick={() => forceMockContext('supported-browser')}
@@ -438,7 +435,7 @@ function AppContent() {
                       }
                       id="mock-supported-btn"
                     >
-                      Browser
+                      {t('e2e.browser')}
                     </button>
                     <button
                       onClick={() => forceMockContext('suspected-in-app-browser')}
@@ -449,7 +446,7 @@ function AppContent() {
                       }
                       id="mock-inapp-btn"
                     >
-                      In-App
+                      {t('e2e.inApp')}
                     </button>
                     <button
                       onClick={() => forceMockContext('installed-pwa')}
@@ -458,51 +455,51 @@ function AppContent() {
                       }
                       id="mock-standalone-btn"
                     >
-                      PWA
+                      {t('e2e.pwa')}
                     </button>
                   </div>
                 </div>
 
                 <div style={styles.panelRow}>
-                  <span style={styles.panelLabel}>Mock Storage Block:</span>
+                  <span style={styles.panelLabel}>{t('e2e.mockStorage')}</span>
                   <button
                     onClick={() => forceMockIdentityBlock(!mockBlocked)}
                     style={mockBlocked ? styles.panelButtonActive : styles.panelButton}
                     id="toggle-mock-indexeddb-btn"
                   >
-                    {mockBlocked ? 'BLOCKED' : 'ALLOW'}
+                    {mockBlocked ? t('e2e.blocked') : t('e2e.allow')}
                   </button>
                 </div>
 
                 <div style={styles.panelRow}>
-                  <span style={styles.panelLabel}>SW Update:</span>
+                  <span style={styles.panelLabel}>{t('e2e.swUpdate')}</span>
                   <div style={styles.panelStatusGroup}>
                     <span style={styles.panelValue} id="sw-status-label">
                       {isUpdateAvailable
                         ? updateDeferred
-                          ? 'Deferred (In Match)'
-                          : 'Available'
-                        : 'Up to Date'}
+                          ? t('e2e.deferred')
+                          : t('e2e.available')
+                        : t('e2e.upToDate')}
                     </span>
                     <button
                       onClick={simulateMockUpdate}
                       style={styles.panelActionBtn}
                       id="mock-sw-update-btn"
                     >
-                      Simulate Update
+                      {t('e2e.simulate')}
                     </button>
                   </div>
                 </div>
 
                 {isUpdateAvailable && (
                   <div style={styles.panelRow}>
-                    <span style={styles.panelLabel}>Action:</span>
+                    <span style={styles.panelLabel}>{t('e2e.action')}</span>
                     <button
                       onClick={triggerUpdate}
                       style={styles.updateActionBtn}
                       id="trigger-sw-update-btn"
                     >
-                      Reload & Apply Update
+                      {t('e2e.reloadApply')}
                     </button>
                   </div>
                 )}
@@ -513,7 +510,7 @@ function AppContent() {
       </main>
 
       <footer style={styles.footer}>
-        <p>© 2026 BoardLink. No tracking or third-party cookies.</p>
+        <p>{t('app.footer')}</p>
       </footer>
     </div>
   );

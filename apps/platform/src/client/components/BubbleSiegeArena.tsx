@@ -111,7 +111,8 @@ export function BubbleSiegeArena({
               : v.myRole}
         </span>
         <span>
-          You <strong>{v.scoreA ?? '–'}</strong> · CPU <strong>{v.scoreB ?? '–'}</strong>
+          {t('common.you')} <strong>{v.scoreA ?? '–'}</strong> · {t('common.cpu')}{' '}
+          <strong>{v.scoreB ?? '–'}</strong>
         </span>
       </div>
 

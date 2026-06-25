@@ -14,6 +14,34 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     'app.settingsTitle': '⚙️ 설정',
     'app.indexedDbWarn':
       'IndexedDB 차단/미지원: 암호화 프로필과 게임 기록이 브라우저를 닫으면 저장되지 않습니다(주로 시크릿 모드). 일반 모드로 열어주세요.',
+    'app.footer': '© 2026 BoardLink. 추적·서드파티 쿠키 없음.',
+
+    'common.you': '나',
+    'common.cpu': '컴퓨터',
+
+    'invite.title': '✉️ 초대를 받았습니다',
+    'invite.desc':
+      '보드게임 세션에 초대되었습니다. 이 미리보기 페이지는 인앱 브라우저에서도 안전하게 동작합니다.',
+    'invite.token': '토큰',
+    'invite.enter': '게임 방 입장',
+
+    'e2e.title': '⚙️ E2E 목 설정 (개발용)',
+    'e2e.mockContext': '목 컨텍스트:',
+    'e2e.browser': '브라우저',
+    'e2e.inApp': '인앱',
+    'e2e.pwa': 'PWA',
+    'e2e.mockStorage': '목 저장소 차단:',
+    'e2e.blocked': '차단됨',
+    'e2e.allow': '허용',
+    'e2e.swUpdate': 'SW 업데이트:',
+    'e2e.deferred': '연기됨 (매치 중)',
+    'e2e.available': '사용 가능',
+    'e2e.upToDate': '최신',
+    'e2e.simulate': '업데이트 모의 실행',
+    'e2e.action': '동작:',
+    'e2e.reloadApply': '새로고침하여 업데이트 적용',
+
+    'lookup.placeholder': '예: ABCD-1234',
 
     'profile.title': '👤 기기 프로필',
     'profile.displayName': '표시 이름',
@@ -116,6 +144,34 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     'app.settingsTitle': '⚙️ Settings',
     'app.indexedDbWarn':
       'IndexedDB blocked or unsupported: your cryptographic profile and game stats will not be saved after closing the browser (often Private/Incognito mode). Please use a normal browsing window.',
+    'app.footer': '© 2026 BoardLink. No tracking or third-party cookies.',
+
+    'common.you': 'You',
+    'common.cpu': 'CPU',
+
+    'invite.title': '✉️ Invitation Received',
+    'invite.desc':
+      'You have been invited to join a board game session. This preview page is safe inside in-app browsers.',
+    'invite.token': 'Token',
+    'invite.enter': 'Enter Game Room',
+
+    'e2e.title': '⚙️ E2E Mock Settings (dev)',
+    'e2e.mockContext': 'Mock Context:',
+    'e2e.browser': 'Browser',
+    'e2e.inApp': 'In-App',
+    'e2e.pwa': 'PWA',
+    'e2e.mockStorage': 'Mock Storage Block:',
+    'e2e.blocked': 'BLOCKED',
+    'e2e.allow': 'ALLOW',
+    'e2e.swUpdate': 'SW Update:',
+    'e2e.deferred': 'Deferred (In Match)',
+    'e2e.available': 'Available',
+    'e2e.upToDate': 'Up to Date',
+    'e2e.simulate': 'Simulate Update',
+    'e2e.action': 'Action:',
+    'e2e.reloadApply': 'Reload & Apply Update',
+
+    'lookup.placeholder': 'e.g. ABCD-1234',
 
     'profile.title': '👤 Device Profile',
     'profile.displayName': 'Display Name',
